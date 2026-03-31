@@ -1,42 +1,83 @@
 import { Button, Card, Form, Input, Select, Space, message } from 'antd';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { callbackNodeCategories, callbackNodes } from '../../mock/platformData';
+import { callbackNodeCategories } from '../../mock/platformData';
+import { createConvNode, getConvNodeById, updateConvNode } from '../../api/convNode';
 
 export function CallbackNodeFormPage({ mode }) {
   const navigate = useNavigate();
+  const [form] = Form.useForm();
   const [searchParams] = useSearchParams();
-  const currentRecord = useMemo(() => {
-    const nodeId = searchParams.get('id');
-    return callbackNodes.find((item) => item.id === nodeId) || callbackNodes[0];
-  }, [searchParams]);
+  const nodeId = useMemo(() => searchParams.get('id'), [searchParams]);
+  const isEdit = mode === 'edit';
+  const [loading, setLoading] = useState(false);
 
-  const title = mode === 'edit' ? '编辑回传节点' : '新增回传节点';
+  const title = isEdit ? '编辑回传节点' : '新增回传节点';
+
+  useEffect(() => {
+    if (!isEdit) {
+      form.setFieldsValue({
+        category: callbackNodeCategories[0],
+        app: '客户端',
+      });
+      return;
+    }
+    if (!nodeId) return;
+
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await getConvNodeById(nodeId);
+        const record = res?.data?.data;
+        if (cancelled || !record) return;
+        form.setFieldsValue({
+          name: record.nodeName ?? record.name,
+          convType: record.convType,
+          category: record.eventCategory ?? record.category,
+          description: record.description,
+          judgeRule: record.judgeRule,
+          app: record.app ?? '客户端',
+        });
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [form, isEdit, nodeId]);
 
   return (
     <Card bordered={false} className="page-card form-page-card">
       <div className="page-form-title">{title}</div>
       <Form
+        form={form}
         layout="vertical"
         className="form-page"
-        initialValues={
-          mode === 'edit'
-            ? {
-                name: currentRecord.name,
-                convType: currentRecord.convType,
-                category: currentRecord.category,
-                description: currentRecord.description,
-                judgeRule: currentRecord.judgeRule,
-                app: '客户端',
-              }
-            : {
-                category: callbackNodeCategories[0],
-                app: '客户端',
-              }
-        }
-        onFinish={() => {
-          message.success(`${title}已保存（Mock）`);
-          navigate('/callback/node-management');
+        onFinish={async (values) => {
+          const data = {
+            nodeName: values.name?.trim(),
+            convType: values.convType?.trim(),
+            eventCategory: values.category,
+            description: values.description,
+            judgeRule: values.judgeRule,
+            app: values.app,
+          };
+
+          setLoading(true);
+          try {
+            if (isEdit) {
+              await updateConvNode(nodeId, data);
+            } else {
+              await createConvNode(data);
+            }
+            message.success(`${title}成功`);
+            navigate('/callback/node-management');
+          } finally {
+            setLoading(false);
+          }
         }}
       >
         <Form.Item label="节点名" name="name" rules={[{ required: true, message: '请输入节点名' }]}>
@@ -59,10 +100,12 @@ export function CallbackNodeFormPage({ mode }) {
         </Form.Item>
         <div className="form-footer">
           <Space>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" htmlType="submit" loading={loading}>
               保存
             </Button>
-            <Button onClick={() => navigate(-1)}>取消</Button>
+            <Button disabled={loading} onClick={() => navigate(-1)}>
+              取消
+            </Button>
           </Space>
         </div>
       </Form>

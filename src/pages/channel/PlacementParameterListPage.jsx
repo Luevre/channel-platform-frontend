@@ -1,7 +1,8 @@
 import { Button, Card, Form, Input, Select, Space, Table } from 'antd';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { parameterCategories, placementParameters } from '../../mock/platformData';
+import { parameterCategories } from '../../mock/platformData';
+import { getPlacementParamPage } from '../../api/placementParam';
 
 export function PlacementParameterListPage() {
   const navigate = useNavigate();
@@ -11,15 +12,35 @@ export function PlacementParameterListPage() {
     nameEn: '',
     category: undefined,
   });
+  const [dataSource, setDataSource] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [pagination, setPagination] = useState({ current: 1, size: 20 });
+  const [loading, setLoading] = useState(false);
 
-  const filteredData = useMemo(() => {
-    return placementParameters.filter((item) => {
-      const matchNameCn = !filters.nameCn || item.nameCn.includes(filters.nameCn);
-      const matchNameEn = !filters.nameEn || item.nameEn.includes(filters.nameEn);
-      const matchCategory = !filters.category || item.category === filters.category;
-      return matchNameCn && matchNameEn && matchCategory;
-    });
-  }, [filters]);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        paramName: filters.nameCn || undefined,
+        channelCode: filters.nameEn || undefined,
+        status: filters.category || undefined,
+        current: pagination.current,
+        size: pagination.size,
+      };
+      const res = await getPlacementParamPage(params);
+      const records = res?.data?.records || [];
+      const total = res?.data?.total || 0;
+      setDataSource(records);
+      setTotal(total);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, pagination.current, pagination.size]);
 
   const columns = [
     {
@@ -84,6 +105,7 @@ export function PlacementParameterListPage() {
       nameEn: values.nameEn?.trim() || '',
       category: values.category,
     });
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const handleReset = () => {
@@ -93,6 +115,15 @@ export function PlacementParameterListPage() {
       nameEn: '',
       category: undefined,
     });
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
+  const handleTableChange = (page) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: page.current,
+      size: page.pageSize,
+    }));
   };
 
   return (
@@ -129,10 +160,13 @@ export function PlacementParameterListPage() {
       <Table
         rowKey="id"
         columns={columns}
-        dataSource={filteredData}
+        dataSource={dataSource}
+        loading={loading}
+        onChange={handleTableChange}
         pagination={{
-          total: 5133,
-          pageSize: 20,
+          current: pagination.current,
+          pageSize: pagination.size,
+          total,
           showSizeChanger: false,
           showTotal: (total, range) => `当前第${range[0]}-${range[1]}条 总计${total}条`,
         }}

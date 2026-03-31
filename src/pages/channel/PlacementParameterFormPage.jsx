@@ -1,19 +1,22 @@
 import { Button, Card, Form, Input, Select, Space, message } from 'antd';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { parameterCategories, placementParameters } from '../../mock/platformData';
+import { createPlacementParam, updatePlacementParam } from '../../api/placementParam';
 
 export function PlacementParameterFormPage({ mode }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const parameterId = searchParams.get('id');
+  const isEdit = mode === 'edit';
+  const [loading, setLoading] = useState(false);
 
   const currentRecord = useMemo(() => {
     return placementParameters.find((item) => item.id === parameterId) || placementParameters[0];
   }, [parameterId]);
 
   const initialValues =
-    mode === 'edit'
+    isEdit
       ? {
           nameCn: currentRecord.nameCn,
           nameEn: currentRecord.nameEn,
@@ -28,11 +31,31 @@ export function PlacementParameterFormPage({ mode }) {
           applicantChannel: '开发配置',
         };
 
-  const title = mode === 'edit' ? '编辑投放参数' : '新增投放参数';
+  const title = isEdit ? '编辑投放参数' : '新增投放参数';
 
-  const onFinish = () => {
-    message.success(`${title}已保存（Mock）`);
-    navigate('/channel/placement-params');
+  const onFinish = async (values) => {
+    const data = {
+      paramName: values.nameCn?.trim(),
+      channelCode: values.nameEn?.trim(),
+      sampleValue: values.sampleValue,
+      status: values.category,
+      application: values.application,
+      manager: values.manager,
+      applicantChannel: values.applicantChannel,
+    };
+
+    setLoading(true);
+    try {
+      if (isEdit) {
+        await updatePlacementParam(parameterId, data);
+      } else {
+        await createPlacementParam(data);
+      }
+      message.success(`${title}成功`);
+      navigate('/channel/placement-params');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -71,10 +94,12 @@ export function PlacementParameterFormPage({ mode }) {
         </Form.Item>
         <div className="form-footer">
           <Space>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" htmlType="submit" loading={loading}>
               保存
             </Button>
-            <Button onClick={() => navigate(-1)}>取消</Button>
+            <Button disabled={loading} onClick={() => navigate(-1)}>
+              取消
+            </Button>
           </Space>
         </div>
       </Form>

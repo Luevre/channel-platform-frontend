@@ -1,7 +1,7 @@
 import { Button, Card, Form, Input, Select, Space, Table, message } from 'antd';
-import { useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { myParameters } from '../../mock/platformData';
+import { archiveMyParameter, getMyParameterPage, submitMyParameter } from '../../api/myParameter';
 
 export function MyParameterListPage() {
   const navigate = useNavigate();
@@ -11,6 +11,10 @@ export function MyParameterListPage() {
     value: '',
     parameterName: undefined,
   });
+  const [dataSource, setDataSource] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [pagination, setPagination] = useState({ current: 1, size: 20 });
+  const [loading, setLoading] = useState(false);
 
   const parameterOptions = [
     { label: '全部', value: '' },
@@ -18,14 +22,30 @@ export function MyParameterListPage() {
     { label: 'employee_id | 员工工号', value: 'employee_id | 员工工号' },
   ];
 
-  const dataSource = useMemo(() => {
-    return myParameters.filter((item) => {
-      const matchScene = !filters.scene || item.scene.includes(filters.scene);
-      const matchValue = !filters.value || item.value.includes(filters.value);
-      const matchName = !filters.parameterName || item.parameterName === filters.parameterName;
-      return matchScene && matchValue && matchName;
-    });
-  }, [filters]);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        scene: filters.scene || undefined,
+        value: filters.value || undefined,
+        parameterName: filters.parameterName || undefined,
+        current: pagination.current,
+        size: pagination.size,
+      };
+      const res = await getMyParameterPage(params);
+      const records = res?.data?.records || [];
+      const total = res?.data?.total || 0;
+      setDataSource(records);
+      setTotal(total);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, pagination.current, pagination.size]);
 
   const columns = [
     {
@@ -76,10 +96,26 @@ export function MyParameterListPage() {
           >
             编辑
           </Button>
-          <Button type="link" className="table-action-button" onClick={() => message.success('已提交（Mock）')}>
+          <Button
+            type="link"
+            className="table-action-button"
+            onClick={async () => {
+              await submitMyParameter(record.id);
+              message.success('已提交');
+              fetchData();
+            }}
+          >
             提交
           </Button>
-          <Button type="link" className="table-action-button" onClick={() => message.info('已归档（Mock）')}>
+          <Button
+            type="link"
+            className="table-action-button"
+            onClick={async () => {
+              await archiveMyParameter(record.id);
+              message.info('已归档');
+              fetchData();
+            }}
+          >
             归档
           </Button>
         </Space>
@@ -94,6 +130,7 @@ export function MyParameterListPage() {
       value: values.value?.trim() || '',
       parameterName: values.parameterName || undefined,
     });
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const handleReset = () => {
@@ -103,6 +140,15 @@ export function MyParameterListPage() {
       value: '',
       parameterName: undefined,
     });
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
+  const handleTableChange = (page) => {
+    setPagination((prev) => ({
+      ...prev,
+      current: page.current,
+      size: page.pageSize,
+    }));
   };
 
   return (
@@ -135,9 +181,12 @@ export function MyParameterListPage() {
         rowKey="id"
         columns={columns}
         dataSource={dataSource}
+        loading={loading}
+        onChange={handleTableChange}
         pagination={{
-          total: 5133,
-          pageSize: 20,
+          current: pagination.current,
+          pageSize: pagination.size,
+          total,
           showSizeChanger: false,
           showTotal: (total, range) => `当前第${range[0]}-${range[1]}条 总计${total}条`,
         }}
