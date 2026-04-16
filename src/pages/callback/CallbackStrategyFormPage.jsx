@@ -65,6 +65,29 @@ export function CallbackStrategyFormPage({ mode }) {
     value: node.id,
   }));
 
+  // 策略模型对应的预设节点名称
+  const MODEL_PRESET_NODES = {
+    '下载回传模型': ['APP下载', '首次APP启动', '签署隐私协议', '用户注册', '预约开户', '开户成功'],
+  };
+
+  const handleModelChange = (value) => {
+    const presetNames = MODEL_PRESET_NODES[value];
+    if (presetNames && allNodes.length > 0) {
+      const presetRows = presetNames
+        .map((name) => {
+          const node = allNodes.find((n) => n.nodeName === name);
+          return node ? { nodeId: node.id, adParam: '' } : null;
+        })
+        .filter(Boolean);
+      if (presetRows.length > 0) {
+        setNodeRows(presetRows);
+        return;
+      }
+    }
+    // 非预设模型或没匹配到节点，重置为空行
+    setNodeRows([{ nodeId: undefined, adParam: '' }]);
+  };
+
   const getNodeDetail = (nodeId) => allNodes.find((n) => n.id === nodeId);
 
   const handleFinish = async (values) => {
@@ -126,9 +149,13 @@ export function CallbackStrategyFormPage({ mode }) {
         </Form.Item>
         <Form.Item label="策略模型" name="strategyRule">
           <Select
+            onChange={handleModelChange}
             options={[
+              { label: '自定义模型', value: '自定义模型' },
               { label: '下载回传模型', value: '下载回传模型' },
               { label: '下载留存模型', value: '下载留存模型' },
+              { label: '增值产品签约模型', value: '增值产品签约模型' },
+              { label: '客户资产信息模型', value: '客户资产信息模型' },
             ]}
           />
         </Form.Item>

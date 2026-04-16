@@ -16,3 +16,6 @@ export const deletePlacementParam = (id) =>
   request.delete(`/channel/placement-params/${id}`)
 export const auditPlacementParam = (data) =>
   request.post('/channel/placement-params/audit', data)
+
+export const getParamDictList = (placementParamId) =>
+  request.get(`/channel/placement-params/${placementParamId}/dict`)

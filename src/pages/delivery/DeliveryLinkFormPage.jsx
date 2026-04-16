@@ -1,7 +1,7 @@
 import { CheckOutlined, CloseOutlined, CopyOutlined, SearchOutlined } from '@ant-design/icons';
 import {
   Button, Card, Checkbox, Collapse, Form, Input, Modal,
-  Select, Space, Table, message,
+  Select, Space, Table, AutoComplete, message,
 } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -11,42 +11,9 @@ import {
   getContents, getDeliveryLinkById, getPlatforms,
   updateContent, updateDeliveryLink, updatePlatform, updatePosition,
 } from '../../api/deliveryLink';
+import { getPlacementParamPage } from '../../api/placementParam';
 
 const PROMO_MODES = ['网销线上推广', '网金线下推广', '网销线下推广'];
-
-const PARAM_GROUPS = [
-  {
-    group: '场景参数',
-    options: [
-      { label: 'channel_type | 渠道编码', value: 'channel_type' },
-      { label: 'biz_type | 注册用户业务来源', value: 'biz_type' },
-      { label: 'entrance_type | AI签约入口参数', value: 'entrance_type' },
-    ],
-  },
-  {
-    group: '活动参数',
-    options: [
-      { label: 'activity_no | 活动编号', value: 'activity_no' },
-      { label: 'activity_id | 营销活动编号', value: 'activity_id' },
-    ],
-  },
-  {
-    group: '产品参数',
-    options: [
-      { label: 'tabKey | AI投顾产品编号', value: 'tabKey' },
-      { label: 'btgpjt | 产品二选开关', value: 'btgpjt' },
-    ],
-  },
-  {
-    group: '人员参数',
-    options: [
-      { label: 'employee_id | 员工工号', value: 'employee_id' },
-      { label: 'recommend_code | 推荐人', value: 'recommend_code' },
-    ],
-  },
-];
-
-const ALL_OPTIONS = PARAM_GROUPS.flatMap((g) => g.options);
 
 export function DeliveryLinkFormPage({ mode }) {
   const navigate = useNavigate();
@@ -77,14 +44,60 @@ export function DeliveryLinkFormPage({ mode }) {
   const [paramValues, setParamValues] = useState({});
   const [paramSearch, setParamSearch] = useState('');
 
+  // 从投放参数表动态加载参数，按 category 分组
+  const [paramGroups, setParamGroups] = useState([]);
+  const [paramSuggestions, setParamSuggestions] = useState({}); // { paramKey: ['值1', '值2'] }
+  const allOptions = useMemo(() => paramGroups.flatMap((g) => g.options), [paramGroups]);
+
+  useEffect(() => {
+    getPlacementParamPage({ current: 1, size: 500 }).then((res) => {
+      const records = res?.data?.records || [];
+      const groupMap = {};
+      const sugMap = {};
+      const seenKeys = new Set();
+      records.forEach((item) => {
+        const cat = item.category || '其他参数';
+        if (!groupMap[cat]) groupMap[cat] = [];
+        // 按 paramKey 去重，同一个 key 只保留第一条
+        const dedupeKey = `${cat}::${item.paramKey}`;
+        if (!seenKeys.has(dedupeKey)) {
+          seenKeys.add(dedupeKey);
+          groupMap[cat].push({
+            label: `${item.paramKey} | ${item.paramName}`,
+            value: item.paramKey,
+          });
+        }
+        // 收集参数值示例作为下拉建议（所有记录都参与）
+        if (item.paramValue) {
+          if (!sugMap[item.paramKey]) sugMap[item.paramKey] = [];
+          const vals = item.paramValue.split(/[,，;；\s]+/).filter(Boolean);
+          vals.forEach((v) => {
+            if (!sugMap[item.paramKey].includes(v)) sugMap[item.paramKey].push(v);
+          });
+        }
+      });
+      setParamSuggestions(sugMap);
+      // 固定分类排序
+      const ORDER = ['场景参数', '活动参数', '产品参数', '人员参数'];
+      const groups = Object.entries(groupMap)
+        .sort(([a], [b]) => {
+          const ia = ORDER.indexOf(a);
+          const ib = ORDER.indexOf(b);
+          return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        })
+        .map(([group, options]) => ({ group, options }));
+      setParamGroups(groups);
+    });
+  }, []);
+
   const filteredGroups = useMemo(() => {
-    if (!paramSearch.trim()) return PARAM_GROUPS;
+    if (!paramSearch.trim()) return paramGroups;
     const kw = paramSearch.trim().toLowerCase();
-    return PARAM_GROUPS.map((g) => ({
+    return paramGroups.map((g) => ({
       ...g,
       options: g.options.filter((o) => o.label.toLowerCase().includes(kw) || o.value.toLowerCase().includes(kw)),
     })).filter((g) => g.options.length > 0);
-  }, [paramSearch]);
+  }, [paramSearch, paramGroups]);
 
   const fetchContents = () => getContents().then((res) => setContents(res?.data || []));
   const fetchPlatforms = () => getPlatforms().then((res) => setPlatforms(res?.data || []));
@@ -377,7 +390,7 @@ export function DeliveryLinkFormPage({ mode }) {
                 <Input placeholder="请选择要拼接的参数" prefix={<SearchOutlined />}
                   value={paramSearch} onChange={(e) => setParamSearch(e.target.value)} />
               </div>
-              <Collapse ghost defaultActiveKey={PARAM_GROUPS.map((g) => g.group)} items={filteredGroups.map((item) => ({
+              <Collapse ghost defaultActiveKey={paramGroups.map((g) => g.group)} items={filteredGroups.map((item) => ({
                 key: item.group,
                 label: item.group,
                 children: (
@@ -407,14 +420,19 @@ export function DeliveryLinkFormPage({ mode }) {
             </div>
             <div className="parameter-value-list">
               {selectedParams.map((key) => {
-                const opt = ALL_OPTIONS.find((o) => o.value === key);
+                const opt = allOptions.find((o) => o.value === key);
+                const suggestions = (paramSuggestions[key] || []).map((v) => ({ label: v, value: v }));
                 return (
                   <div key={key} className="parameter-value-row">
                     <div className="parameter-value-label">{opt?.label || key}</div>
-                    <Input
+                    <AutoComplete
+                      options={suggestions}
                       placeholder={`请输入${opt?.label || key}`}
                       value={paramValues[key] || ''}
-                      onChange={(e) => setParamValues((prev) => ({ ...prev, [key]: e.target.value }))}
+                      onChange={(val) => setParamValues((prev) => ({ ...prev, [key]: val }))}
+                      filterOption={(input, option) =>
+                        (option?.value ?? '').toLowerCase().includes(input.toLowerCase())
+                      }
                     />
                     <Button type="text" icon={<CloseOutlined />}
                       onClick={() => {

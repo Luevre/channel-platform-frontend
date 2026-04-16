@@ -37,9 +37,23 @@ export const routeMetaList = [
     parentKey: 'channel-management',
   },
   {
+    key: 'channel-placement-params-dict',
+    path: '/channel/placement-params/dict',
+    title: '参数字典表',
+    menuKey: 'channel-placement-params',
+    parentKey: 'channel-management',
+  },
+  {
     key: 'channel-my-params',
     path: '/channel/my-params',
     title: '我的参数管理',
+    menuKey: 'channel-my-params',
+    parentKey: 'channel-management',
+  },
+  {
+    key: 'channel-my-params-view',
+    path: '/channel/my-params/view',
+    title: '查看我的参数',
     menuKey: 'channel-my-params',
     parentKey: 'channel-management',
   },
@@ -265,6 +279,7 @@ export const menuKeyToPath = routeMetaList.reduce((accumulator, item) => {
     item.path.includes('/edit') ||
     item.path.includes('/view') ||
     item.path.includes('/detail') ||
+    item.path.includes('/dict') ||
     item.path.endsWith('/review')
   ) {
     return accumulator;
@@ -274,4 +289,4 @@ export const menuKeyToPath = routeMetaList.reduce((accumulator, item) => {
   return accumulator;
 }, {});
 
-export const defaultOpenKeys = ['channel-management', 'callback-management', 'delivery-management'];
+export const defaultOpenKeys = [];

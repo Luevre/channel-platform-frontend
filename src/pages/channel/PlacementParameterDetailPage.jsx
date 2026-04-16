@@ -46,7 +46,12 @@ export function PlacementParameterDetailPage() {
           <Button size="small">点我申请</Button>
         </Descriptions.Item>
         <Descriptions.Item label="参数字典表">
-          <Button size="small">点我查看</Button>
+          <Button
+            size="small"
+            onClick={() => navigate(`/channel/placement-params/dict?id=${data.id}`)}
+          >
+            点我查看
+          </Button>
         </Descriptions.Item>
       </Descriptions>
       <div className="form-footer">

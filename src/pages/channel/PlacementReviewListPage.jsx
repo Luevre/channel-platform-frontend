@@ -50,8 +50,14 @@ export function PlacementReviewListPage() {
       title: '参数应用场景',
       dataIndex: 'scene',
       width: 130,
-      render: (value) => (
-        <Button type="link" className="table-action-button">{value}</Button>
+      render: (value, record) => (
+        <Button
+          type="link"
+          className="table-action-button"
+          onClick={() => navigate(`/channel/placement-review/detail?id=${record.id}`)}
+        >
+          {value}
+        </Button>
       ),
     },
     { title: '参数值', dataIndex: 'value', width: 130 },

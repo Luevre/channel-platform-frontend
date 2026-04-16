@@ -6,9 +6,11 @@ import { CallbackStrategyFormPage } from './pages/callback/CallbackStrategyFormP
 import { CallbackStrategyListPage } from './pages/callback/CallbackStrategyListPage';
 import { MyParameterFormPage } from './pages/channel/MyParameterFormPage';
 import { MyParameterListPage } from './pages/channel/MyParameterListPage';
+import { MyParameterDetailPage } from './pages/channel/MyParameterDetailPage';
 import { PlacementParameterDetailPage } from './pages/channel/PlacementParameterDetailPage';
 import { PlacementParameterFormPage } from './pages/channel/PlacementParameterFormPage';
 import { PlacementParameterListPage } from './pages/channel/PlacementParameterListPage';
+import { ParamDictPage } from './pages/channel/ParamDictPage';
 import { PlacementReviewDetailPage } from './pages/channel/PlacementReviewDetailPage';
 import { PlacementReviewListPage } from './pages/channel/PlacementReviewListPage';
 import { DeliveryLinkFormPage } from './pages/delivery/DeliveryLinkFormPage';
@@ -40,7 +42,9 @@ export default function App() {
         { path: 'channel/placement-params/create', element: <PlacementParameterFormPage mode="create" /> },
         { path: 'channel/placement-params/edit', element: <PlacementParameterFormPage mode="edit" /> },
         { path: 'channel/placement-params/view', element: <PlacementParameterDetailPage /> },
+        { path: 'channel/placement-params/dict', element: <ParamDictPage /> },
         { path: 'channel/my-params', element: <MyParameterListPage /> },
+        { path: 'channel/my-params/view', element: <MyParameterDetailPage /> },
         { path: 'channel/my-params/create', element: <MyParameterFormPage mode="create" /> },
         { path: 'channel/my-params/review', element: <MyParameterFormPage mode="edit" /> },
         { path: 'channel/placement-review', element: <PlacementReviewListPage /> },

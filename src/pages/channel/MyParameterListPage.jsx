@@ -1,14 +1,22 @@
-import { Button, Card, Form, Input, Select, Space, Table, Tag, message } from 'antd';
+import { Button, Card, Form, Input, Select, Space, Table, Tag, Tooltip, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { archiveMyParameter, getMyParameterPage, submitMyParameter } from '../../api/myParameter';
 import { formatDateTime } from '../../utils/format';
 
-// 审核状态映射
+// 提交状态映射
 const STATUS_MAP = {
   0: { label: '草稿', color: 'default' },
   1: { label: '已提交', color: 'blue' },
   2: { label: '已归档', color: 'green' },
+};
+
+// 审核状态映射
+const AUDIT_MAP = {
+  0: { label: '待审核', color: 'default' },
+  1: { label: '处理中', color: 'processing' },
+  2: { label: '已完成', color: 'success' },
+  3: { label: '驳回', color: 'error' },
 };
 
 export function MyParameterListPage() {
@@ -18,6 +26,7 @@ export function MyParameterListPage() {
     scene: '',
     value: '',
     parameterName: undefined,
+    auditResult: undefined,
   });
   const [dataSource, setDataSource] = useState([]);
   const [total, setTotal] = useState(0);
@@ -37,6 +46,7 @@ export function MyParameterListPage() {
         scene: filters.scene || undefined,
         value: filters.value || undefined,
         parameterName: filters.parameterName || undefined,
+        auditResult: filters.auditResult != null ? filters.auditResult : undefined,
         current: pagination.current,
         size: pagination.size,
       };
@@ -58,8 +68,12 @@ export function MyParameterListPage() {
       title: '参数应用场景',
       dataIndex: 'scene',
       width: 130,
-      render: (value) => (
-        <Button type="link" className="table-action-button">
+      render: (value, record) => (
+        <Button
+          type="link"
+          className="table-action-button"
+          onClick={() => navigate(`/channel/my-params/view?id=${record.id}`)}
+        >
           {value}
         </Button>
       ),
@@ -67,21 +81,28 @@ export function MyParameterListPage() {
     { title: '参数值', dataIndex: 'value', width: 130 },
     { title: '参数名', dataIndex: 'parameterName', width: 180 },
     { title: '参数使用说明', dataIndex: 'usage' },
+    {
+      title: '审核状态',
+      dataIndex: 'auditResult',
+      width: 100,
+      render: (val, record) => {
+        const a = AUDIT_MAP[val] ?? { label: '待审核', color: 'default' };
+        const tooltipText = record.handler
+          ? `当前处理人：${record.handler}`
+          : '暂无处理人';
+        return (
+          <Tooltip title={tooltipText}>
+            <Tag color={a.color}>{a.label}</Tag>
+          </Tooltip>
+        );
+      },
+    },
     { title: '申请人', dataIndex: 'applicant', width: 90 },
     {
       title: '提交时间',
       dataIndex: 'submittedAt',
       width: 170,
       render: formatDateTime,
-    },
-    {
-      title: '审核状态',
-      dataIndex: 'status',
-      width: 100,
-      render: (val) => {
-        const s = STATUS_MAP[val] ?? { label: '未知', color: 'default' };
-        return <Tag color={s.color}>{s.label}</Tag>;
-      },
     },
     {
       title: '操作',
@@ -145,13 +166,14 @@ export function MyParameterListPage() {
       scene: values.scene?.trim() || '',
       value: values.value?.trim() || '',
       parameterName: values.parameterName || undefined,
+      auditResult: values.auditResult != null ? values.auditResult : undefined,
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const handleReset = () => {
     form.resetFields();
-    setFilters({ scene: '', value: '', parameterName: undefined });
+    setFilters({ scene: '', value: '', parameterName: undefined, auditResult: undefined });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -175,6 +197,14 @@ export function MyParameterListPage() {
           </Form.Item>
           <Form.Item label="参数名" name="parameterName">
             <Select placeholder="全部" allowClear options={parameterOptions} style={{ width: 180 }} />
+          </Form.Item>
+          <Form.Item label="审核状态" name="auditResult">
+            <Select placeholder="全部" allowClear style={{ width: 140 }} options={[
+              { label: '待审核', value: 0 },
+              { label: '处理中', value: 1 },
+              { label: '已完成', value: 2 },
+              { label: '驳回', value: 3 },
+            ]} />
           </Form.Item>
         </Form>
         <div className="toolbar-actions">

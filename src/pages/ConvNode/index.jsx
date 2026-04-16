@@ -19,7 +19,7 @@ import { formatDateTime } from '../../utils/format'
 const { Option } = Select
 
 // 节点事件分类选项（对应后端数据）
-const EVENT_CATEGORIES = ['下载开户节点', '活动节点', 'AI投顾节点']
+const EVENT_CATEGORIES = ['下载开户节点', '活动节点', 'AI投顾节点', '客户资产信息']
 
 export default function ConvNodePage() {
   const [loading, setLoading]   = useState(false)

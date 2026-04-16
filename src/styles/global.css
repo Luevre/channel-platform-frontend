@@ -147,6 +147,11 @@ body {
   overflow: hidden;
 }
 
+/* 表单页面允许内容滚动 */
+.form-page-card > .ant-card-body {
+  overflow: auto;
+}
+
 .page-toolbar {
   display: flex;
   justify-content: space-between;
@@ -223,6 +228,14 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 参数应用列：允许自动换行，显示全部内容 */
+.page-card .ant-table-tbody > tr > td.cell-wrap {
+  white-space: normal;
+  word-break: break-all;
+  text-align: left;
+  line-height: 1.6;
 }
 
 .nowrap-header {

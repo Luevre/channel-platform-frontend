@@ -152,8 +152,11 @@ export function CallbackStrategyListPage() {
             placeholder="全部"
             allowClear
             options={[
+              { label: '自定义模型', value: '自定义模型' },
               { label: '下载回传模型', value: '下载回传模型' },
               { label: '下载留存模型', value: '下载留存模型' },
+              { label: '增值产品签约模型', value: '增值产品签约模型' },
+              { label: '客户资产信息模型', value: '客户资产信息模型' },
             ]}
             style={{ width: 170 }}
           />
