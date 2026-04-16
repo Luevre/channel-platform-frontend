@@ -1,6 +1,6 @@
 import { MenuOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Drawer, Grid, Layout, Menu, Tabs } from 'antd';
+import { Button, Drawer, Grid, Layout, Menu, Tabs, Tooltip } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   defaultOpenKeys,
@@ -80,7 +80,7 @@ export function AppLayout() {
 
   const tabItems = openTabs.map((item, index) => ({
     key: item.path,
-    label: item.title,
+    label: <Tooltip title={item.title} mouseEnterDelay={0.5}>{item.title}</Tooltip>,
     closable: index !== 0,
   }));
 

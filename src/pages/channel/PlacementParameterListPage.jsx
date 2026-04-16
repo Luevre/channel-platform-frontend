@@ -1,37 +1,42 @@
-import { Button, Card, Form, Input, Select, Space, Table } from 'antd';
+import { Button, Card, Form, Input, Select, Space, Table, Tooltip } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { parameterCategories } from '../../mock/platformData';
 import { getPlacementParamPage } from '../../api/placementParam';
+import { formatDateTime } from '../../utils/format';
 
 export function PlacementParameterListPage() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [filters, setFilters] = useState({
-    nameCn: '',
-    nameEn: '',
+    paramName: '',
+    paramKey: '',
     category: undefined,
   });
   const [dataSource, setDataSource] = useState([]);
   const [total, setTotal] = useState(0);
-  const [pagination, setPagination] = useState({ current: 1, size: 20 });
+  const [pagination, setPagination] = useState({ current: 1, size: 10 });
   const [loading, setLoading] = useState(false);
+
+  const categoryOptions = [
+    { label: '场景参数', value: '场景参数' },
+    { label: '人员参数', value: '人员参数' },
+    { label: '活动参数', value: '活动参数' },
+    { label: '产品参数', value: '产品参数' },
+  ];
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const params = {
-        paramName: filters.nameCn || undefined,
-        channelCode: filters.nameEn || undefined,
-        status: filters.category || undefined,
+        paramName: filters.paramName || undefined,
+        paramKey: filters.paramKey || undefined,
+        category: filters.category || undefined,
         current: pagination.current,
         size: pagination.size,
       };
       const res = await getPlacementParamPage(params);
-      const records = res?.data?.records || [];
-      const total = res?.data?.total || 0;
-      setDataSource(records);
-      setTotal(total);
+      setDataSource(res?.data?.records || []);
+      setTotal(res?.data?.total || 0);
     } finally {
       setLoading(false);
     }
@@ -45,41 +50,50 @@ export function PlacementParameterListPage() {
   const columns = [
     {
       title: '参数名_中文',
-      dataIndex: 'nameCn',
-      width: 130,
+      dataIndex: 'paramName',
+      width: 150,
+      ellipsis: { showTitle: false },
       render: (value, record) => (
-        <Button
-          type="link"
-          className="table-action-button"
-          onClick={() => navigate(`/channel/placement-params/view?id=${record.id}`)}
-        >
-          {value}
-        </Button>
+        <Tooltip title={value}>
+          <Button
+            type="link"
+            className="table-action-button"
+            onClick={() => navigate(`/channel/placement-params/view?id=${record.id}`)}
+          >
+            {value}
+          </Button>
+        </Tooltip>
       ),
     },
     {
       title: '参数名_英文',
-      dataIndex: 'nameEn',
-      width: 140,
+      dataIndex: 'paramKey',
+      width: 160,
+      ellipsis: { showTitle: true },
     },
     {
       title: '参数分类',
       dataIndex: 'category',
-      width: 110,
+      width: 100,
+      ellipsis: { showTitle: true },
     },
     {
       title: '参数应用',
-      dataIndex: 'application',
+      dataIndex: 'paramUsage',
+      ellipsis: { showTitle: true },
     },
     {
       title: '参数管理员',
       dataIndex: 'manager',
-      width: 100,
+      width: 110,
+      ellipsis: { showTitle: true },
     },
     {
       title: '最近操作时间',
       dataIndex: 'updatedAt',
-      width: 170,
+      width: 180,
+      ellipsis: { showTitle: true },
+      render: formatDateTime,
     },
     {
       title: '操作',
@@ -101,8 +115,8 @@ export function PlacementParameterListPage() {
   const handleSearch = () => {
     const values = form.getFieldsValue();
     setFilters({
-      nameCn: values.nameCn?.trim() || '',
-      nameEn: values.nameEn?.trim() || '',
+      paramName: values.paramName?.trim() || '',
+      paramKey: values.paramKey?.trim() || '',
       category: values.category,
     });
     setPagination((prev) => ({ ...prev, current: 1 }));
@@ -110,11 +124,7 @@ export function PlacementParameterListPage() {
 
   const handleReset = () => {
     form.resetFields();
-    setFilters({
-      nameCn: '',
-      nameEn: '',
-      category: undefined,
-    });
+    setFilters({ paramName: '', paramKey: '', category: undefined });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -130,26 +140,24 @@ export function PlacementParameterListPage() {
     <Card bordered={false} className="page-card">
       <div className="page-toolbar">
         <Form form={form} layout="inline" className="filter-form">
-          <Form.Item label="参数名称" name="nameCn">
+          <Form.Item label="参数名称" name="paramName">
             <Input placeholder="请输入参数名称" allowClear />
           </Form.Item>
-          <Form.Item label="参数名" name="nameEn">
+          <Form.Item label="参数名" name="paramKey">
             <Input placeholder="请输入参数名，支持中英文" allowClear />
           </Form.Item>
           <Form.Item label="参数分类" name="category">
             <Select
               placeholder="全部"
               allowClear
-              options={parameterCategories.map((item) => ({ label: item, value: item }))}
+              options={categoryOptions}
               style={{ width: 180 }}
             />
           </Form.Item>
         </Form>
         <div className="toolbar-actions">
           <Space>
-            <Button type="primary" onClick={handleSearch}>
-              查询
-            </Button>
+            <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
           <Button type="primary" onClick={() => navigate('/channel/placement-params/create')}>
@@ -163,6 +171,7 @@ export function PlacementParameterListPage() {
         dataSource={dataSource}
         loading={loading}
         onChange={handleTableChange}
+        scroll={{ x: 900 }}
         pagination={{
           current: pagination.current,
           pageSize: pagination.size,
@@ -170,7 +179,6 @@ export function PlacementParameterListPage() {
           showSizeChanger: false,
           showTotal: (total, range) => `当前第${range[0]}-${range[1]}条 总计${total}条`,
         }}
-        scroll={{ x: 1220 }}
       />
     </Card>
   );

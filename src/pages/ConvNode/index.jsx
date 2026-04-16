@@ -8,6 +8,7 @@ import {
   getConvNodePage, createConvNode,
   updateConvNode, deleteConvNode, archiveConvNode
 } from '../../api/convNode'
+import { formatDateTime } from '../../utils/format'
 
 // =============================================
 // 回传节点管理页面（完整联动版）
@@ -125,7 +126,7 @@ export default function ConvNodePage() {
     { title: '创建人', dataIndex: 'creatorName', width: 90 },
     {
       title: '最近操作时间', dataIndex: 'updatedAt', width: 160,
-      render: (v) => v ? v.replace('T', ' ').substring(0, 19) : '-'
+      render: formatDateTime
     },
     {
       title: '操作', width: 110, fixed: 'right',

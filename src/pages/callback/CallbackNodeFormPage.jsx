@@ -1,7 +1,7 @@
 import { Button, Card, Form, Input, Select, Space, message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { callbackNodeCategories } from '../../mock/platformData';
+import { callbackNodeCategories } from '../../constants/convNode';
 import { createConvNode, getConvNodeById, updateConvNode } from '../../api/convNode';
 
 export function CallbackNodeFormPage({ mode }) {
@@ -29,14 +29,14 @@ export function CallbackNodeFormPage({ mode }) {
       setLoading(true);
       try {
         const res = await getConvNodeById(nodeId);
-        const record = res?.data?.data;
+        const record = res?.data;
         if (cancelled || !record) return;
         form.setFieldsValue({
-          name: record.nodeName ?? record.name,
-          convType: record.convType,
-          category: record.eventCategory ?? record.category,
-          description: record.description,
-          judgeRule: record.judgeRule,
+          name: record.nodeName,
+          convType: record.convType != null ? String(record.convType) : '',
+          category: record.eventCategory,
+          description: record.eventDesc,
+          judgeRule: record.eventJudge,
           app: record.app ?? '客户端',
         });
       } finally {
@@ -59,11 +59,10 @@ export function CallbackNodeFormPage({ mode }) {
         onFinish={async (values) => {
           const data = {
             nodeName: values.name?.trim(),
-            convType: values.convType?.trim(),
+            convType: values.convType ? Number(values.convType) : undefined,
             eventCategory: values.category,
-            description: values.description,
-            judgeRule: values.judgeRule,
-            app: values.app,
+            eventDesc: values.description,
+            eventJudge: values.judgeRule,
           };
 
           setLoading(true);

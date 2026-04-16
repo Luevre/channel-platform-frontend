@@ -20,3 +20,6 @@ export const submitMyParameter = (id) =>
 
 export const archiveMyParameter = (id) =>
   request.put(`/channel/my-params/${id}/archive`)
+
+export const auditMyParameter = (data) =>
+  request.post('/channel/my-params/review/audit', data)

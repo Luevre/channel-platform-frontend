@@ -1,28 +1,45 @@
 import { Button, Card, Descriptions, Space } from 'antd';
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { placementParameters } from '../../mock/platformData';
+import { getPlacementParamById } from '../../api/placementParam';
 
 export function PlacementParameterDetailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const currentRecord = useMemo(() => {
-    const parameterId = searchParams.get('id');
-    return placementParameters.find((item) => item.id === parameterId) || placementParameters[0];
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const id = searchParams.get('id');
+      if (!id) return;
+      setLoading(true);
+      try {
+        const res = await getPlacementParamById(id);
+        setData(res?.data);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, [searchParams]);
+
+  if (loading || !data) {
+    return <Card bordered={false} className="page-card">加载中...</Card>;
+  }
 
   return (
     <Card bordered={false} className="page-card detail-page-card">
       <div className="page-form-title">查看投放参数</div>
       <Descriptions column={1} className="detail-descriptions">
-        <Descriptions.Item label="参数名_中文">{currentRecord.nameCn}</Descriptions.Item>
-        <Descriptions.Item label="参数名_英文">{currentRecord.nameEn}</Descriptions.Item>
-        <Descriptions.Item label="参数值示例">{currentRecord.sampleValue}</Descriptions.Item>
-        <Descriptions.Item label="参数分类">{currentRecord.category}</Descriptions.Item>
-        <Descriptions.Item label="参数应用">{currentRecord.application}</Descriptions.Item>
+        <Descriptions.Item label="参数名_中文">{data.paramName}</Descriptions.Item>
+        <Descriptions.Item label="参数名_英文">{data.paramKey}</Descriptions.Item>
+        <Descriptions.Item label="参数值示例">{data.paramValue}</Descriptions.Item>
+        <Descriptions.Item label="参数分类">{data.category}</Descriptions.Item>
+        <Descriptions.Item label="参数应用">{data.paramUsage}</Descriptions.Item>
         <Descriptions.Item label="参数管理员">
           <Button type="link" className="table-action-button">
-            {currentRecord.manager}
+            {data.manager}
           </Button>
         </Descriptions.Item>
         <Descriptions.Item label="参数申请通道">
@@ -36,7 +53,7 @@ export function PlacementParameterDetailPage() {
         <Space>
           <Button
             type="primary"
-            onClick={() => navigate(`/channel/placement-params/edit?id=${currentRecord.id}`)}
+            onClick={() => navigate(`/channel/placement-params/edit?id=${data.id}`)}
           >
             编辑
           </Button>

@@ -12,7 +12,8 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 body {
@@ -20,7 +21,8 @@ body {
 }
 
 .app-shell {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .app-sider {
@@ -60,26 +62,51 @@ body {
 
 .app-main {
   margin-left: 248px;
-  min-height: 100vh;
+  height: 100vh;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .app-header {
   height: auto;
   padding: 16px 20px 0;
   background: #f3f6fb;
+  flex-shrink: 0;
 }
 
 .app-tabs .ant-tabs-nav {
   margin: 0;
 }
 
+.app-tabs .ant-tabs-nav-list {
+  display: flex !important;
+}
+
 .app-tabs .ant-tabs-tab {
+  width: 160px;
+  min-width: 0;
+  justify-content: center;
   border-radius: 10px 10px 0 0 !important;
+}
+
+.app-tabs .ant-tabs-tab .ant-tabs-tab-btn {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-tabs .ant-tabs-nav-add {
+  display: none !important;
 }
 
 .app-content {
   padding: 20px;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 }
 
 .mobile-topbar {
@@ -105,9 +132,19 @@ body {
 }
 
 .page-card {
-  min-height: calc(100vh - 112px);
+  height: 100%;
   border-radius: 16px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+}
+
+.page-card > .ant-card-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .page-toolbar {
@@ -156,8 +193,36 @@ body {
   padding-inline: 0;
 }
 
+.page-card .ant-table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
 .page-card .ant-table-wrapper .ant-table-pagination.ant-pagination {
   justify-content: center;
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  padding: 12px 0;
+  margin: 0;
+  z-index: 2;
+}
+
+.page-card .ant-table {
+  table-layout: fixed;
+}
+
+.page-card .ant-table-thead > tr > th {
+  text-align: center;
+}
+
+.page-card .ant-table-tbody > tr > td {
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .nowrap-header {
@@ -331,7 +396,7 @@ body {
   }
 
   .page-card {
-    min-height: calc(100vh - 132px);
+    height: 100%;
     border-radius: 12px;
   }
 

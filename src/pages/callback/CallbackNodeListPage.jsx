@@ -1,8 +1,9 @@
 import { Button, Card, Form, Input, Select, Space, Table } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { callbackNodeCategories } from '../../mock/platformData';
+import { callbackNodeCategories } from '../../constants/convNode';
 import { getConvNodePage } from '../../api/convNode';
+import { formatDateTime } from '../../utils/format';
 
 export function CallbackNodeListPage() {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ export function CallbackNodeListPage() {
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({
     current: 1,
-    size: 20,
+    size: 10,
   });
   const [loading, setLoading] = useState(false);
 
@@ -25,7 +26,7 @@ export function CallbackNodeListPage() {
     try {
       const params = {
         nodeName: filters.name || undefined,
-        convType: filters.convType || undefined,
+        convType: filters.convType ? Number(filters.convType) : undefined,
         eventCategory: filters.category || undefined,
         current: pagination.current,
         size: pagination.size,
@@ -61,9 +62,9 @@ export function CallbackNodeListPage() {
     { title: <span className="nowrap-header">convType值</span>, dataIndex: 'convType', width: 96 },
     { title: '节点事件分类', dataIndex: 'eventCategory', width: 120 },
     { title: '节点事件说明', dataIndex: 'eventDesc', width: 420 },
-    { title: '节点事件判断', dataIndex: 'judgeRule', width: 180 },
+    { title: '节点事件判断', dataIndex: 'eventJudge', width: 180 },
     { title: '创建人', dataIndex: 'creatorName', width: 90 },
-    { title: '最近操作时间', dataIndex: 'updatedAt', width: 170 },
+    { title: '最近操作时间', dataIndex: 'updatedAt', width: 170, render: formatDateTime },
     {
       title: '操作',
       key: 'action',

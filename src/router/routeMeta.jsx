@@ -93,6 +93,20 @@ export const routeMetaList = [
     parentKey: 'callback-management',
   },
   {
+    key: 'callback-my-node',
+    path: '/callback/my-node',
+    title: '我的节点管理',
+    menuKey: 'callback-my-node',
+    parentKey: 'callback-management',
+  },
+  {
+    key: 'callback-node-review',
+    path: '/callback/node-review',
+    title: '回传节点审核',
+    menuKey: 'callback-node-review',
+    parentKey: 'callback-management',
+  },
+  {
     key: 'callback-strategy-management',
     path: '/callback/strategy-management',
     title: '回传策略管理',
@@ -109,14 +123,37 @@ export const routeMetaList = [
   {
     key: 'delivery-link-management',
     path: '/delivery/link-management',
-    title: '投放链接管理',
+    title: '投放场景管理',
     menuKey: 'delivery-link-management',
+    parentKey: 'delivery-management',
   },
   {
     key: 'delivery-link-management-create',
     path: '/delivery/link-management/create',
     title: '新增投放链接',
     menuKey: 'delivery-link-management',
+    parentKey: 'delivery-management',
+  },
+  {
+    key: 'delivery-link-management-edit',
+    path: '/delivery/link-management/edit',
+    title: '编辑投放链接',
+    menuKey: 'delivery-link-management',
+    parentKey: 'delivery-management',
+  },
+  {
+    key: 'delivery-my-scene',
+    path: '/delivery/my-scene',
+    title: '我的投放场景',
+    menuKey: 'delivery-my-scene',
+    parentKey: 'delivery-management',
+  },
+  {
+    key: 'delivery-scene-review',
+    path: '/delivery/scene-review',
+    title: '投放场景审核',
+    menuKey: 'delivery-scene-review',
+    parentKey: 'delivery-management',
   },
   {
     key: 'delivery-deeplink',
@@ -127,7 +164,7 @@ export const routeMetaList = [
   {
     key: 'public-data-management',
     path: '/public/data-management',
-    title: '公域数据管理',
+    title: '银证渠道回传管理',
     menuKey: 'public-data-management',
   },
   {
@@ -173,15 +210,37 @@ export const menuItems = [
         label: '回传节点管理',
       },
       {
+        key: 'callback-my-node',
+        label: '我的节点管理',
+      },
+      {
+        key: 'callback-node-review',
+        label: '回传节点审核',
+      },
+      {
         key: 'callback-strategy-management',
         label: '回传策略管理',
       },
     ],
   },
   {
-    key: 'delivery-link-management',
+    key: 'delivery-management',
     icon: <LinkOutlined />,
-    label: '投放链接管理',
+    label: '投放场景管理',
+    children: [
+      {
+        key: 'delivery-link-management',
+        label: '投放场景管理',
+      },
+      {
+        key: 'delivery-my-scene',
+        label: '我的投放场景',
+      },
+      {
+        key: 'delivery-scene-review',
+        label: '投放场景审核',
+      },
+    ],
   },
   {
     key: 'delivery-deeplink',
@@ -191,7 +250,7 @@ export const menuItems = [
   {
     key: 'public-data-management',
     icon: <ApartmentOutlined />,
-    label: '公域数据管理',
+    label: '银证渠道回传管理',
   },
   {
     key: 'report-performance',
@@ -215,4 +274,4 @@ export const menuKeyToPath = routeMetaList.reduce((accumulator, item) => {
   return accumulator;
 }, {});
 
-export const defaultOpenKeys = ['channel-management', 'callback-management'];
+export const defaultOpenKeys = ['channel-management', 'callback-management', 'delivery-management'];

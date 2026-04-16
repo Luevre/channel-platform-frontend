@@ -1,7 +1,15 @@
-import { Button, Card, Form, Input, Select, Space, Table, message } from 'antd';
+import { Button, Card, Form, Input, Select, Space, Table, Tag, message } from 'antd';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { archiveMyParameter, getMyParameterPage, submitMyParameter } from '../../api/myParameter';
+import { formatDateTime } from '../../utils/format';
+
+// 审核状态映射
+const STATUS_MAP = {
+  0: { label: '草稿', color: 'default' },
+  1: { label: '已提交', color: 'blue' },
+  2: { label: '已归档', color: 'green' },
+};
 
 export function MyParameterListPage() {
   const navigate = useNavigate();
@@ -13,7 +21,7 @@ export function MyParameterListPage() {
   });
   const [dataSource, setDataSource] = useState([]);
   const [total, setTotal] = useState(0);
-  const [pagination, setPagination] = useState({ current: 1, size: 20 });
+  const [pagination, setPagination] = useState({ current: 1, size: 10 });
   const [loading, setLoading] = useState(false);
 
   const parameterOptions = [
@@ -33,10 +41,8 @@ export function MyParameterListPage() {
         size: pagination.size,
       };
       const res = await getMyParameterPage(params);
-      const records = res?.data?.records || [];
-      const total = res?.data?.total || 0;
-      setDataSource(records);
-      setTotal(total);
+      setDataSource(res?.data?.records || []);
+      setTotal(res?.data?.total || 0);
     } finally {
       setLoading(false);
     }
@@ -58,68 +64,78 @@ export function MyParameterListPage() {
         </Button>
       ),
     },
-    {
-      title: '参数值',
-      dataIndex: 'value',
-      width: 130,
-    },
-    {
-      title: '参数名',
-      dataIndex: 'parameterName',
-      width: 180,
-    },
-    {
-      title: '参数使用说明',
-      dataIndex: 'usage',
-    },
-    {
-      title: '申请人',
-      dataIndex: 'applicant',
-      width: 90,
-    },
+    { title: '参数值', dataIndex: 'value', width: 130 },
+    { title: '参数名', dataIndex: 'parameterName', width: 180 },
+    { title: '参数使用说明', dataIndex: 'usage' },
+    { title: '申请人', dataIndex: 'applicant', width: 90 },
     {
       title: '提交时间',
       dataIndex: 'submittedAt',
       width: 170,
+      render: formatDateTime,
+    },
+    {
+      title: '审核状态',
+      dataIndex: 'status',
+      width: 100,
+      render: (val) => {
+        const s = STATUS_MAP[val] ?? { label: '未知', color: 'default' };
+        return <Tag color={s.color}>{s.label}</Tag>;
+      },
     },
     {
       title: '操作',
       key: 'action',
       width: 160,
       fixed: 'right',
-      render: (_, record) => (
-        <Space size={8}>
-          <Button
-            type="link"
-            className="table-action-button"
-            onClick={() => navigate(`/channel/my-params/review?id=${record.id}`)}
-          >
-            编辑
-          </Button>
-          <Button
-            type="link"
-            className="table-action-button"
-            onClick={async () => {
-              await submitMyParameter(record.id);
-              message.success('已提交');
-              fetchData();
-            }}
-          >
-            提交
-          </Button>
-          <Button
-            type="link"
-            className="table-action-button"
-            onClick={async () => {
-              await archiveMyParameter(record.id);
-              message.info('已归档');
-              fetchData();
-            }}
-          >
-            归档
-          </Button>
-        </Space>
-      ),
+      render: (_, record) => {
+        const isDraft = record.status === 0;       // 草稿：可编辑、可提交、可归档
+        const isSubmitted = record.status === 1;   // 已提交：只能归档
+        return (
+          <Space size={8}>
+            <Button
+              type="link"
+              className="table-action-button"
+              disabled={!isDraft}
+              onClick={() => navigate(`/channel/my-params/review?id=${record.id}`)}
+            >
+              编辑
+            </Button>
+            <Button
+              type="link"
+              className="table-action-button"
+              disabled={!isDraft}
+              onClick={async () => {
+                try {
+                  await submitMyParameter(record.id);
+                  message.success('已提交');
+                  fetchData();
+                } catch {
+                  message.error('提交失败');
+                }
+              }}
+            >
+              提交
+            </Button>
+            <Button
+              type="link"
+              className="table-action-button"
+              disabled={record.status === 2}
+              onClick={async () => {
+                try {
+                  await archiveMyParameter(record.id);
+                  message.info('已归档');
+                  fetchData();
+                } catch {
+                  message.error('归档失败');
+                }
+              }}
+            >
+              归档
+            </Button>
+          </Space>
+        );
+      },
     },
   ];
 
@@ -135,11 +151,7 @@ export function MyParameterListPage() {
 
   const handleReset = () => {
     form.resetFields();
-    setFilters({
-      scene: '',
-      value: '',
-      parameterName: undefined,
-    });
+    setFilters({ scene: '', value: '', parameterName: undefined });
     setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
@@ -167,9 +179,7 @@ export function MyParameterListPage() {
         </Form>
         <div className="toolbar-actions">
           <Space>
-            <Button type="primary" onClick={handleSearch}>
-              查询
-            </Button>
+            <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
           <Button type="primary" onClick={() => navigate('/channel/my-params/create')}>
@@ -188,9 +198,9 @@ export function MyParameterListPage() {
           pageSize: pagination.size,
           total,
           showSizeChanger: false,
-          showTotal: (total, range) => `当前第${range[0]}-${range[1]}条 总计${total}条`,
+          showTotal: (t, range) => `当前第${range[0]}-${range[1]}条 总计${t}条`,
         }}
-        scroll={{ x: 1180 }}
+        scroll={{ x: 1280 }}
       />
     </Card>
   );
