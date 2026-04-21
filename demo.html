@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>渠道投放管理平台</title>
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/antd/5.12.8/reset.min.css">
+  <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/antd/5.12.8/antd.min.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; background: #f3f6fb; }
+    #root { min-height: 100vh; }
+    .app-shell { min-height: 100vh; display: flex; }
+    .app-sider { width: 248px; background: #001529; flex-shrink: 0; }
+    .app-logo { height: 72px; display: flex; align-items: center; padding: 0 24px; color: #fff; font-size: 20px; font-weight: bold; }
+    .app-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .app-header { padding: 16px 20px 0; background: #f3f6fb; }
+    .app-content { padding: 20px; flex: 1; background: #f3f6fb; overflow: auto; }
+    .page-card { border-radius: 16px; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06); }
+    .page-toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 16px; }
+    .toolbar-actions { display: flex; gap: 12px; }
+    .filter-form { display: flex; gap: 16px; flex-wrap: wrap; }
+    .page-form-title { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #edf1f7; font-size: 22px; font-weight: 600; }
+    .form-page { max-width: 760px; }
+    .form-footer { display: flex; justify-content: flex-end; margin-top: 32px; }
+    .detail-item { display: flex; padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
+    .detail-label { width: 140px; color: #5b6b82; flex-shrink: 0; }
+    .detail-value { flex: 1; color: #1f2937; }
+    .login-container { min-height: 100vh; display: flex; justify-content: center; align-items: center; background: #f0f2f5; }
+    .table-action-button { padding: 0; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://cdn.bootcdn.net/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/antd/5.12.8/antd.min.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/babel-standalone/7.23.6/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+    const { Button, Card, Form, Input, Select, Space, Table, Tag, Tooltip, Menu, Tabs, Layout, Checkbox, Radio, message } = antd;
+    const { Header, Sider, Content } = Layout;
+    const { TextArea } = Input;
+
+    // Mock Data
+    const mockUsers = [
+      { id: 1, username: 'admin', password: '123456', realName: '管理员', role: 'admin' },
+      { id: 2, username: 'user', password: '123456', realName: '普通用户', role: 'user' },
+    ];
+
+    const mockPlacementParams = [
+      { id: 1, paramName: '渠道编码', paramKey: 'channel_type', category: '场景参数', paramUsage: '用于标识不同渠道来源，用于区分用户流量入口', manager: '张三', updatedAt: '2026-04-15 10:30:00' },
+      { id: 2, paramName: '员工工号', paramKey: 'employee_id', category: '人员参数', paramUsage: '用于绑定专属客户经理，追踪客户归属', manager: '李四', updatedAt: '2026-04-14 15:20:00' },
+      { id: 3, paramName: '活动ID', paramKey: 'activity_id', category: '活动参数', paramUsage: '用于区分不同营销活动的追踪标识', manager: '王五', updatedAt: '2026-04-13 09:45:00' },
+      { id: 4, paramName: '产品编号', paramKey: 'product_code', category: '产品参数', paramUsage: '用于标识具体产品型号，便于精准推荐', manager: '赵六', updatedAt: '2026-04-12 14:00:00' },
+      { id: 5, paramName: '渠道名称', paramKey: 'channel_name', category: '场景参数', paramUsage: '用于展示渠道中文名称，便于运营查看', manager: '张三', updatedAt: '2026-04-11 11:30:00' },
+      { id: 6, paramName: '部门编码', paramKey: 'dept_code', category: '人员参数', paramUsage: '用于归属员工所属部门组织架构', manager: '李四', updatedAt: '2026-04-10 16:20:00' },
+      { id: 7, paramName: '营销活动', paramKey: 'campaign_name', category: '活动参数', paramUsage: '用于营销活动名称展示和追踪', manager: '王五', updatedAt: '2026-04-09 10:00:00' },
+      { id: 8, paramName: '产品线', paramKey: 'product_line', category: '产品参数', paramUsage: '用于产品线分类，便于统计分析', manager: '赵六', updatedAt: '2026-04-08 13:45:00' },
+    ];
+
+    let mockReviewParams = [
+      { id: 101, scene: 'APP推广', parameterName: 'channel_type', value: 'APP001', usage: '用于APP渠道投放追踪', applicant: '张三', submittedAt: '2026-04-15 14:30:00', auditResult: 0 },
+      { id: 102, scene: '微信小程序', parameterName: 'employee_id', value: 'E10025', usage: '绑定专属客户经理', applicant: '李四', submittedAt: '2026-04-14 09:20:00', auditResult: 1, auditor: '管理员' },
+      { id: 103, scene: '官网渠道', parameterName: 'activity_id', value: 'ACT20260401', usage: '春季营销活动追踪', applicant: '王五', submittedAt: '2026-04-13 16:00:00', auditResult: 2, auditor: '管理员', auditRemark: '活动ID格式不符合规范' },
+      { id: 104, scene: '线下地推', parameterName: 'product_code', value: 'PROD-2026-001', usage: '新产品上线推广', applicant: '赵六', submittedAt: '2026-04-12 11:45:00', auditResult: 0 },
+      { id: 105, scene: '短信营销', parameterName: 'channel_name', value: '短信渠道A', usage: '短信推广渠道', applicant: '张三', submittedAt: '2026-04-11 15:20:00', auditResult: 1, auditor: '管理员' },
+    ];
+
+    const routeMetaList = [
+      { path: '/', title: '投放参数管理', menuKey: 'placement-params' },
+      { path: '/review', title: '审核管理', menuKey: 'review' },
+    ];
+
+    const routeMetaMap = {};
+    routeMetaList.forEach(m => { routeMetaMap[m.path] = m; });
+
+    const menuItems = [
+      { key: 'placement-params', icon: '📋', label: '投放参数管理' },
+      { key: 'review', icon: '✅', label: '审核管理' },
+    ];
+
+    // 登录页
+    function LoginPage({ onLogin }) {
+      const [loading, setLoading] = useState(false);
+      const [form] = Form.useForm();
+
+      const onFinish = (values) => {
+        setLoading(true);
+        setTimeout(() => {
+          const user = mockUsers.find(u => u.username === values.username && u.password === values.password);
+          if (user) {
+            localStorage.setItem('userInfo', JSON.stringify(user));
+            onLogin(user);
+            message.success('登录成功');
+          } else {
+            message.error('用户名或密码错误');
+          }
+          setLoading(false);
+        }, 500);
+      };
+
+      return (
+        <div className="login-container">
+          <Card style={{ width: 400 }}>
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <h2 style={{ color: '#1a56a0', margin: '0 0 8px' }}>渠道投放管理平台</h2>
+              <p style={{ color: '#888', margin: 0 }}>请登录以继续</p>
+            </div>
+            <Form form={form} onFinish={onFinish} autoComplete="off">
+              <Form.Item name="username" rules={[{ required: true, message: '请输入用户名' }]}>
+                <Input prefix="👤" placeholder="用户名" size="large" />
+              </Form.Item>
+              <Form.Item name="password" rules={[{ required: true, message: '请输入密码' }]}>
+                <Input.Password prefix="🔒" placeholder="密码" size="large" />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" loading={loading} block size="large">登录</Button>
+              </Form.Item>
+              <div style={{ textAlign: 'center', color: '#888', fontSize: 12 }}>
+                测试账号: admin / 123456
+              </div>
+            </Form>
+          </Card>
+        </div>
+      );
+    }
+
+    // 投放参数列表页
+    function PlacementParameterListPage({ navigate }) {
+      const [form] = Form.useForm();
+      const [filters, setFilters] = useState({ paramName: '', paramKey: '', category: undefined });
+      const [dataSource, setDataSource] = useState(mockPlacementParams);
+      const [total, setTotal] = useState(mockPlacementParams.length);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [pageSize] = useState(10);
+      const [loading, setLoading] = useState(false);
+
+      const categoryOptions = [
+        { label: '场景参数', value: '场景参数' },
+        { label: '人员参数', value: '人员参数' },
+        { label: '活动参数', value: '活动参数' },
+        { label: '产品参数', value: '产品参数' },
+      ];
+
+      const fetchData = () => {
+        setLoading(true);
+        setTimeout(() => {
+          let filtered = [...mockPlacementParams];
+          if (filters.paramName) filtered = filtered.filter(p => p.paramName.includes(filters.paramName));
+          if (filters.paramKey) filtered = filtered.filter(p => p.paramKey.includes(filters.paramKey));
+          if (filters.category) filtered = filtered.filter(p => p.category === filters.category);
+          const start = (currentPage - 1) * pageSize;
+          setDataSource(filtered.slice(start, start + pageSize));
+          setTotal(filtered.length);
+          setLoading(false);
+        }, 300);
+      };
+
+      useEffect(() => { fetchData(); }, [filters, currentPage]);
+
+      const columns = [
+        { title: '参数名_中文', dataIndex: 'paramName', width: 150, render: (val, record) => <Button type="link" className="table-action-button" onClick={() => navigate(`/view?id=${record.id}`)}>{val}</Button> },
+        { title: '参数名_英文', dataIndex: 'paramKey', width: 160 },
+        { title: '参数分类', dataIndex: 'category', width: 100 },
+        { title: '参数应用', dataIndex: 'paramUsage', onCell: () => ({ className: 'cell-wrap' }) },
+        { title: '参数管理员', dataIndex: 'manager', width: 110 },
+        { title: '最近操作时间', dataIndex: 'updatedAt', width: 180 },
+        { title: '操作', key: 'action', width: 80, render: (_, record) => <Button type="link" className="table-action-button" onClick={() => navigate(`/edit?id=${record.id}`)}>编辑</Button> },
+      ];
+
+      const handleSearch = () => {
+        const values = form.getFieldsValue();
+        setFilters({ paramName: values.paramName?.trim() || '', paramKey: values.paramKey?.trim() || '', category: values.category });
+        setCurrentPage(1);
+      };
+
+      const handleReset = () => {
+        form.resetFields();
+        setFilters({ paramName: '', paramKey: '', category: undefined });
+        setCurrentPage(1);
+      };
+
+      return (
+        <Card bordered={false} className="page-card">
+          <div className="page-toolbar">
+            <Form form={form} layout="inline" className="filter-form">
+              <Form.Item label="参数名称" name="paramName"><Input placeholder="请输入参数名称" allowClear style={{ width: 170 }} /></Form.Item>
+              <Form.Item label="参数名" name="paramKey"><Input placeholder="请输入参数名" allowClear style={{ width: 170 }} /></Form.Item>
+              <Form.Item label="参数分类" name="category"><Select placeholder="全部" allowClear options={categoryOptions} style={{ width: 180 }} /></Form.Item>
+            </Form>
+            <div className="toolbar-actions">
+              <Space><Button type="primary" onClick={handleSearch}>查询</Button><Button onClick={handleReset}>重置</Button></Space>
+              <Button type="primary" onClick={() => navigate('/create')}>+ 新增参数</Button>
+            </div>
+          </div>
+          <Table rowKey="id" columns={columns} dataSource={dataSource} loading={loading} pagination={{ current: currentPage, pageSize, total, showSizeChanger: false, showTotal: (t, range) => `当前第${range[0]}-${range[1]}条 总计${t}条` }} onChange={(page) => setCurrentPage(page.current)} scroll={{ x: 900 }} />
+        </Card>
+      );
+    }
+
+    // 投放参数表单页
+    function PlacementParameterFormPage({ navigate, mode, paramId }) {
+      const isEdit = mode === 'edit';
+      const [form] = Form.useForm();
+      const [loading, setLoading] = useState(false);
+
+      useEffect(() => {
+        if (isEdit && paramId) {
+          const param = mockPlacementParams.find(p => p.id == paramId);
+          if (param) {
+            form.setFieldsValue({ paramName: param.paramName, paramKey: param.paramKey, paramValue: '示例值', category: param.category.split(','), paramUsage: param.paramUsage, manager: param.manager });
+          }
+        }
+      }, [isEdit, paramId, form]);
+
+      const categoryOptions = [
+        { label: '场景参数', value: '场景参数' },
+        { label: '人员参数', value: '人员参数' },
+        { label: '活动参数', value: '活动参数' },
+        { label: '产品参数', value: '产品参数' },
+      ];
+
+      const title = isEdit ? '编辑投放参数' : '新增投放参数';
+
+      const onFinish = (values) => {
+        setLoading(true);
+        setTimeout(() => {
+          message.success(`${title}成功`);
+          navigate('/');
+          setLoading(false);
+        }, 500);
+      };
+
+      return (
+        <Card bordered={false} className="page-card">
+          <div className="page-form-title">{title}</div>
+          <Form form={form} layout="vertical" className="form-page" onFinish={onFinish}>
+            <Form.Item label="参数名_中文" name="paramName" rules={[{ required: true, message: '请输入中文参数名称' }]}><Input placeholder="请输入中文参数名称" maxLength={50} /></Form.Item>
+            <Form.Item label="参数名_英文" name="paramKey" rules={[{ required: true, message: '请输入英文参数名称' }]}><Input placeholder="请输入英文参数名称" maxLength={64} /></Form.Item>
+            <Form.Item label="参数值示例" name="paramValue" rules={[{ required: true, message: '请输入参数值示例' }]}><Input placeholder="请输入参数值示例" maxLength={100} /></Form.Item>
+            <Form.Item label="参数分类" name="category" rules={[{ required: true, message: '请选择参数分类' }]}><Checkbox.Group options={categoryOptions} /></Form.Item>
+            <Form.Item label="参数应用" name="paramUsage" rules={[{ required: true, message: '请输入参数应用说明' }]}><TextArea rows={4} maxLength={300} placeholder="请描述参数应用说明" /></Form.Item>
+            <Form.Item label="参数管理员" name="manager"><Input placeholder="请输入参数管理员姓名" /></Form.Item>
+            <div className="form-footer"><Space><Button type="primary" htmlType="submit" loading={loading}>保存</Button><Button onClick={() => navigate('/')}>取消</Button></Space></div>
+          </Form>
+        </Card>
+      );
+    }
+
+    // 投放参数详情页
+    function PlacementParameterDetailPage({ navigate, paramId }) {
+      const param = mockPlacementParams.find(p => p.id == paramId) || {};
+
+      const items = [
+        { label: '参数名_中文', value: param.paramName || '-' },
+        { label: '参数名_英文', value: param.paramKey || '-' },
+        { label: '参数分类', value: param.category || '-' },
+        { label: '参数管理员', value: param.manager || '-' },
+        { label: '最近操作时间', value: param.updatedAt || '-' },
+        { label: '参数应用', value: param.paramUsage || '-' },
+      ];
+
+      return (
+        <Card bordered={false} className="page-card">
+          <div className="page-form-title">参数详情</div>
+          {items.map((item, i) => (
+            <div className="detail-item" key={i}>
+              <div className="detail-label">{item.label}：</div>
+              <div className="detail-value">{item.value}</div>
+            </div>
+          ))}
+          <div className="form-footer"><Button onClick={() => navigate('/')}>返回</Button></div>
+        </Card>
+      );
+    }
+
+    // 审核列表页
+    function PlacementReviewListPage({ navigate }) {
+      const [dataSource, setDataSource] = useState([...mockReviewParams]);
+      const [total, setTotal] = useState(mockReviewParams.length);
+      const [current, setCurrent] = useState(1);
+      const [pageSize] = useState(10);
+      const [loading, setLoading] = useState(false);
+
+      const AUDIT_RESULT_MAP = { 0: { label: '待审核', color: 'gold' }, 1: { label: '已通过', color: 'blue' }, 2: { label: '已驳回', color: 'red' } };
+
+      useEffect(() => {
+        setLoading(true);
+        setTimeout(() => {
+          setDataSource([...mockReviewParams]);
+          setTotal(mockReviewParams.length);
+          setLoading(false);
+        }, 300);
+      }, []);
+
+      const columns = [
+        { title: '参数应用场景', dataIndex: 'scene', width: 130, render: (val, record) => <Button type="link" className="table-action-button" onClick={() => navigate(`/review/detail?id=${record.id}`)}>{val}</Button> },
+        { title: '参数值', dataIndex: 'value', width: 130 },
+        { title: '参数名', dataIndex: 'parameterName', width: 180 },
+        { title: '参数使用说明', dataIndex: 'usage' },
+        { title: '申请人', dataIndex: 'applicant', width: 90 },
+        { title: '提交时间', dataIndex: 'submittedAt', width: 170 },
+        { title: '审核状态', dataIndex: 'auditResult', width: 100, render: (val) => { const s = AUDIT_RESULT_MAP[val ?? 0]; return <Tag color={s.color}>{s.label}</Tag>; } },
+        { title: '操作', key: 'action', width: 80, render: (_, record) => <Button type="link" className="table-action-button" onClick={() => navigate(`/review/detail?id=${record.id}`)}>{record.auditResult === 0 ? '审核' : '查阅'}</Button> },
+      ];
+
+      return (
+        <Card bordered={false} className="page-card">
+          <Table rowKey="id" loading={loading} columns={columns} dataSource={dataSource} pagination={{ current, total, pageSize, showSizeChanger: false, showTotal: (t, range) => `当前第${range[0]}-${range[1]}条 总计${t}条`, onChange: (page) => setCurrent(page) }} scroll={{ x: 1320 }} />
+        </Card>
+      );
+    }
+
+    // 审核详情页
+    function PlacementReviewDetailPage({ navigate, recordId, from }) {
+      const [reviewResult, setReviewResult] = useState(1);
+      const [auditRemark, setAuditRemark] = useState('');
+      const [currentRecord, setCurrentRecord] = useState(null);
+      const [loading, setLoading] = useState(false);
+
+      useEffect(() => {
+        if (recordId) {
+          const record = mockReviewParams.find(r => r.id == recordId);
+          setCurrentRecord(record ? { ...record } : null);
+        }
+      }, [recordId]);
+
+      const handleAudit = () => {
+        if (reviewResult === 2 && !auditRemark.trim()) { message.warning('驳回时请填写驳回原因'); return; }
+        setLoading(true);
+        setTimeout(() => {
+          message.success(reviewResult === 1 ? '已通过，参数已写入正式库' : '已驳回');
+          if (currentRecord) {
+            currentRecord.auditResult = reviewResult;
+            currentRecord.auditRemark = auditRemark;
+            currentRecord.auditor = '管理员';
+            currentRecord.auditTime = '2026-04-16 10:00:00';
+            const idx = mockReviewParams.findIndex(r => r.id == recordId);
+            if (idx >= 0) mockReviewParams[idx] = currentRecord;
+          }
+          navigate('/review');
+          setLoading(false);
+        }, 500);
+      };
+
+      const isPending = currentRecord?.auditResult === 0;
+      const actionButtons = from === 'review' && isPending ? <Space><Button type="primary" loading={loading} onClick={handleAudit}>{reviewResult === 1 ? '通过' : '驳回'}</Button></Space> : null;
+
+      if (!currentRecord) return <div style={{ padding: 40, textAlign: 'center', color: '#888' }}>加载中...</div>;
+
+      const auditResultLabel = { 0: '待审核', 1: '已通过', 2: '已驳回' };
+      const items = [
+        { label: '参数应用场景', value: currentRecord.scene },
+        { label: '参数名', value: currentRecord.parameterName },
+        { label: '参数值', value: currentRecord.value },
+        { label: '参数使用说明', value: currentRecord.usage },
+        { label: '申请人', value: currentRecord.applicant },
+        { label: '提交时间', value: currentRecord.submittedAt },
+      ];
+
+      if (isPending && from === 'review') {
+        items.push({ label: '审核结果', value: <Radio.Group value={reviewResult} onChange={(e) => { setReviewResult(e.target.value); if (e.target.value === 1) setAuditRemark(''); }}><Radio value={1}>通过</Radio><Radio value={2}>驳回</Radio></Radio.Group> });
+        if (reviewResult === 2) items.push({ label: '驳回原因', value: <TextArea rows={3} placeholder="请填写驳回原因" value={auditRemark} onChange={(e) => setAuditRemark(e.target.value)} style={{ width: 400 }} /> });
+      } else {
+        items.push({ label: '审核状态', value: auditResultLabel[currentRecord.auditResult ?? 0] });
+        if (currentRecord.auditor) items.push({ label: '审核人', value: currentRecord.auditor });
+        if (currentRecord.auditRemark) items.push({ label: '驳回原因', value: currentRecord.auditRemark });
+      }
+
+      return (
+        <Card bordered={false} className="page-card" extra={actionButtons}>
+          <div className="page-form-title">{from === 'review' ? '审核参数详情' : '查阅参数详情'}</div>
+          {items.map((item, i) => (
+            <div className="detail-item" key={i}>
+              <div className="detail-label">{item.label}：</div>
+              <div className="detail-value">{item.value}</div>
+            </div>
+          ))}
+          <div className="form-footer"><Button onClick={() => navigate('/review')}>返回</Button></div>
+        </Card>
+      );
+    }
+
+    // 主布局
+    function AppLayout({ children, currentPath, onNavigate }) {
+      const [openTabs, setOpenTabs] = useState([routeMetaMap[currentPath] || routeMetaList[0]]);
+
+      useEffect(() => {
+        const currentMeta = routeMetaMap[currentPath];
+        if (currentMeta) {
+          setOpenTabs(prev => { const exists = prev.some(item => item.path === currentMeta.path); return exists ? prev : [...prev, currentMeta]; });
+        }
+      }, [currentPath]);
+
+      const selectedKeys = useMemo(() => { const currentMeta = routeMetaMap[currentPath]; return currentMeta?.menuKey ? [currentMeta.menuKey] : []; }, [currentPath]);
+
+      const onMenuClick = ({ key }) => { const keyToPath = { 'placement-params': '/', 'review': '/review' }; if (keyToPath[key]) onNavigate(keyToPath[key]); };
+
+      const onTabChange = (activeKey) => onNavigate(activeKey);
+
+      const onTabEdit = (targetKey, action) => {
+        if (action !== 'remove') return;
+        const closableTabs = openTabs.filter(item => item.path !== targetKey);
+        if (closableTabs.length === 0) { setOpenTabs([routeMetaList[0]]); onNavigate(routeMetaList[0].path); return; }
+        setOpenTabs(closableTabs);
+        if (currentPath === targetKey) { const removedIndex = openTabs.findIndex(item => item.path === targetKey); const nextTab = closableTabs[removedIndex - 1] || closableTabs[0]; onNavigate(nextTab.path); }
+      };
+
+      const tabItems = openTabs.map((item, index) => ({ key: item.path, label: <Tooltip title={item.title}>{item.title}</Tooltip>, closable: index !== 0 }));
+
+      return (
+        <Layout className="app-shell">
+          <Sider width={248} className="app-sider" theme="dark">
+            <div className="app-logo">渠道投放管理平台</div>
+            <Menu theme="dark" mode="inline" items={menuItems} selectedKeys={selectedKeys} onClick={onMenuClick} />
+          </Sider>
+          <Layout className="app-main">
+            <Header className="app-header">
+              <Tabs hideAdd type="editable-card" items={tabItems} activeKey={currentPath} onChange={onTabChange} onEdit={onTabEdit} />
+            </Header>
+            <Content className="app-content">{children}</Content>
+          </Layout>
+        </Layout>
+      );
+    }
+
+    // 主应用
+    function App() {
+      const [user, setUser] = useState(() => { try { const saved = localStorage.getItem('userInfo'); return saved ? JSON.parse(saved) : null; } catch { return null; } });
+      const [currentPath, setCurrentPath] = useState('/');
+
+      const navigate = (path) => setCurrentPath(path);
+      const handleLogin = (user) => setUser(user);
+
+      if (!user) return <LoginPage onLogin={handleLogin} />;
+
+      const renderPage = () => {
+        if (currentPath === '/') return <PlacementParameterListPage navigate={navigate} />;
+        if (currentPath === '/create') return <PlacementParameterFormPage navigate={navigate} mode="create" />;
+        if (currentPath.startsWith('/edit')) { const paramId = currentPath.split('=')[1]; return <PlacementParameterFormPage navigate={navigate} mode="edit" paramId={paramId} />; }
+        if (currentPath.startsWith('/view')) { const paramId = currentPath.split('=')[1]; return <PlacementParameterDetailPage navigate={navigate} paramId={paramId} />; }
+        if (currentPath === '/review') return <PlacementReviewListPage navigate={navigate} />;
+        if (currentPath.startsWith('/review/detail')) { const recordId = currentPath.split('=')[1]; return <PlacementReviewDetailPage navigate={navigate} recordId={recordId} from="review" />; }
+        return <PlacementParameterListPage navigate={navigate} />;
+      };
+
+      return <AppLayout currentPath={currentPath} onNavigate={navigate}>{renderPage()}</AppLayout>;
+    }
+
+    // 渲染
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

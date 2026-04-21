@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>渠道管理平台 - 交互预览</title>
+  <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/antd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/antd@5.12.5/dist/reset.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f0f2f5; }
+    .app-container { display: flex; min-height: 100vh; }
+    /* 侧边栏 */
+    .sidebar { width: 220px; background: linear-gradient(180deg, #1a56a0 0%, #153d7a 100%); color: #fff; padding: 0; flex-shrink: 0; }
+    .logo { height: 64px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .logo-icon { width: 32px; height: 32px; background: #fff; border-radius: 6px; margin-right: 10px; display: flex; align-items: center; justify-content: center; color: #1a56a0; font-weight: bold; }
+    .menu-item { padding: 14px 24px; cursor: pointer; display: flex; align-items: center; transition: all 0.2s; border-left: 3px solid transparent; }
+    .menu-item:hover { background: rgba(255,255,255,0.1); }
+    .menu-item.active { background: rgba(255,255,255,0.15); border-left-color: #fff; }
+    .menu-item .icon { margin-right: 12px; font-size: 16px; }
+    .menu-group { padding: 12px 16px 6px; font-size: 12px; color: rgba(255,255,255,0.5); text-transform: uppercase; }
+    /* 主内容区 */
+    .main { flex: 1; display: flex; flex-direction: column; }
+    .header { height: 64px; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+    .header-title { font-size: 18px; font-weight: 500; color: #333; }
+    .header-user { display: flex; align-items: center; gap: 12px; }
+    .user-avatar { width: 36px; height: 36px; background: #1a56a0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; }
+    .content { padding: 24px; flex: 1; overflow-y: auto; }
+    /* 卡片样式 */
+    .page-card { background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.03); margin-bottom: 16px; }
+    .page-card .ant-card-body { padding: 20px; }
+    .card-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 16px; }
+    /* 工具栏 */
+    .toolbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .filter-form { display: flex; flex-wrap: wrap; gap: 12px; }
+    .filter-form .ant-form-item { margin-bottom: 0; }
+    .toolbar-actions { display: flex; gap: 12px; align-items: center; }
+    /* 表格 */
+    .ant-table-wrapper { border-radius: 6px; overflow: hidden; }
+    .table-action-button { padding: 0; height: auto; }
+    /* 状态标签 */
+    .status-tag { padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .status-draft { background: #f5f5f5; color: #666; }
+    .status-submitted { background: #fff7e6; color: #d46b08; }
+    .status-approved { background: #e6f7ff; color: #1890ff; }
+    .status-rejected { background: #fff1f0; color: #cf1322; }
+    .status-archived { background: #f9f9f9; color: #999; }
+    .status-active { background: #f6ffed; color: #52c41a; }
+    .status-inactive { background: #fafafa; color: #999; }
+    /* 弹窗样式 */
+    .modal-form .ant-form-item { margin-bottom: 16px; }
+    .modal-form .ant-form-item-label > label { font-weight: 500; }
+    /* 详情页 */
+    .detail-section { margin-bottom: 24px; }
+    .detail-section-title { font-size: 14px; font-weight: 600; color: #333; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+    .detail-row { display: flex; padding: 10px 0; }
+    .detail-label { width: 120px; color: #666; flex-shrink: 0; }
+    .detail-value { flex: 1; color: #333; }
+    /* 浮动按钮 */
+    .feedback-btn { position: fixed; right: 24px; bottom: 24px; width: 56px; height: 56px; background: #1a56a0; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; box-shadow: 0 4px 12px rgba(26,86,160,0.4); cursor: pointer; transition: all 0.3s; z-index: 1000; }
+    .feedback-btn:hover { transform: scale(1.1); box-shadow: 0 6px 16px rgba(26,86,160,0.5); }
+    /* 反馈弹窗 */
+    .feedback-modal .ant-modal-body { padding: 24px; }
+    .feedback-form .ant-form-item { margin-bottom: 16px; }
+    /* 搜索高亮 */
+    .search-highlight { background: #ffe58f; padding: 0 2px; border-radius: 2px; }
+    /* 响应式 */
+    @media (max-width: 768px) {
+      .sidebar { position: fixed; left: -220px; z-index: 100; transition: left 0.3s; }
+      .sidebar.open { left: 0; }
+      .toolbar { flex-direction: column; }
+      .filter-form { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+    const { Button, Table, Form, Input, Select, DatePicker, Modal, message, Tag, Space, Card, Tooltip, Popconfirm, Tabs, Descriptions, Switch, InputNumber } = antd;
+    const { RangePicker } = DatePicker;
+
+    // Mock 数据
+    const mockData = {
+      // 投放参数
+      placementParams: [
+        { id: 12, paramName: '数据回传链路表示', paramKey: 'channel', paramValue: '（待修改）', category: '场景参数', paramUsage: '渠道投放数据回传时，相同渠道，用以区分不同链路', manager: '吴小青', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-01 09:25:47', updatedAt: '2026-04-15 14:51:38' },
+        { id: 13, paramName: '数据回传代理表示', paramKey: 'agent', paramValue: '（待修改）', category: '场景参数', paramUsage: '渠道投放数据回传时，用以标识代理商', manager: '吴小青', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-01 11:09:02', updatedAt: '2026-04-15 14:51:42' },
+        { id: 14, paramName: '产品二流开关-AI股票解套', paramKey: 'btgpjt', paramValue: '（待修改）', category: '产品参数', paramUsage: '控制AI投顾产品一流二流开关', manager: '周坤成', status: 1, auditStatus: 1, auditor: 'admin', auditTime: '2026-04-16 10:00:00', creatorName: 'admin', createdAt: '2026-04-01 11:11:24', updatedAt: '2026-04-15 14:51:46' },
+        { id: 15, paramName: 'AI签约入口参数', paramKey: 'entrance_type', paramValue: '（待修改）', category: '场景参数', paramUsage: '用于统计客户来源入口，用于辅助分析客户签约来源', manager: '周坤成', status: 1, auditStatus: 2, auditRemark: '参数值不符合规范', auditor: 'admin', auditTime: '2026-04-15 16:00:00', creatorName: 'admin', createdAt: '2026-04-01 11:13:28', updatedAt: '2026-04-15 14:51:49' },
+        { id: 16, paramName: '注册用户业务来源', paramKey: 'biz_type', paramValue: '（待修改）', category: '场景参数', paramUsage: '可用于区分用户是否是通过"开户"、"靓号开户"、"AI投顾"或者"营销活动"等不同业务内容带来的注册', manager: '缪梦楠', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-01 11:25:16', updatedAt: '2026-04-15 14:51:52' },
+        { id: 17, paramName: 'AI投顾产品编号', paramKey: 'tabKey', paramValue: '（待修改）', category: '产品参数', paramUsage: '用于区分AI投顾产品', manager: '廖先龙', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-01 12:48:09', updatedAt: '2026-04-15 14:51:55' },
+        { id: 18, paramName: '魔方页面ID', paramKey: 'activityId', paramValue: '（待修改）', category: '活动参数', paramUsage: '可从魔方页面链接上获取，可用于区分不同魔方页面的访问情况', manager: '沙光泽', status: 1, auditStatus: 1, auditor: 'admin', auditTime: '2026-04-14 09:30:00', creatorName: 'admin', createdAt: '2026-04-01 16:46:09', updatedAt: '2026-04-15 14:51:58' },
+        { id: 19, paramName: '营销活动编号', paramKey: 'activity_id', paramValue: '（待修改）', category: '活动参数', paramUsage: '用于区分不同的活动成效；会进入注册以及开户的remark字段', manager: '金古', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-03 11:10:07', updatedAt: '2026-04-15 14:52:01' },
+        { id: 20, paramName: '活动码', paramKey: 'activity_no', paramValue: '（待修改）', category: '活动参数', paramUsage: '用于区分同一渠道不同位置/不同业务形态的投放成效', manager: '金古', status: 0, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-03 13:50:26', updatedAt: '2026-04-15 14:52:03' },
+        { id: 21, paramName: '员工工号', paramKey: 'employee_id', paramValue: '6532（待修改）', category: '人员参数', paramUsage: '参数管理源自EHR系统员工工号，用于区分客户是否由某员工推荐', manager: '金古', status: 1, auditStatus: 1, auditor: 'admin', auditTime: '2026-04-10 14:00:00', creatorName: 'admin', createdAt: '2026-04-03 14:05:43', updatedAt: '2026-04-15 14:52:05' },
+        { id: 23, paramName: '渠道编码', paramKey: 'channel_type', paramValue: '1002000000000', category: '场景参数', paramUsage: '参数管理源自CRM系统渠道管理，用于区分客户来源渠道', manager: '李立', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-09 13:04:55', updatedAt: '2026-04-15 14:52:14' },
+        { id: 24, paramName: '场景参数检测', paramKey: 'scene', paramValue: '55', category: '场景参数', paramUsage: '1', manager: '1', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-16 15:01:01', updatedAt: '2026-04-16 15:01:01' },
+        { id: 25, paramName: '拉力', paramKey: 'rally', paramValue: '1201', category: '场景参数', paramUsage: '1', manager: '1', status: 1, auditStatus: 0, creatorName: 'admin', createdAt: '2026-04-16 15:39:30', updatedAt: '2026-04-16 15:39:30' },
+      ],
+      // 我的参数（待审核）
+      myParams: [
+        { id: 1, scene: '抖音下载链路', value: '2400000000000', parameterName: 'channel_type | 渠道编码', usage: '仅用于抖音的下载链路使用', applicant: '李秋平', status: 2, auditResult: 0, creatorId: 1, createdAt: '2026-03-31 16:56:06', submittedAt: '2026-04-01 11:19:58' },
+        { id: 2, scene: '快手下载链路', value: '3100000000000', parameterName: 'employee_id | 员工工号', usage: '仅用于快手的下载链路使用', applicant: '李秋平', status: 2, auditResult: 0, creatorId: 1, createdAt: '2026-03-31 16:56:06', submittedAt: null },
+        { id: 3, scene: '华为营销活动', value: '1800000000000', parameterName: 'employee_id | 员工工号', usage: '用于华为渠道营销活动追踪', applicant: '吴小青', status: 2, auditResult: 0, creatorId: 2, createdAt: '2026-03-31 16:56:06', submittedAt: '2026-04-01 11:20:06' },
+        { id: 14, scene: '小红书下载', value: '522025360035', parameterName: '小红书下载链路 channel_type', usage: '用于小红书链路', applicant: 'admin', status: 1, auditResult: 1, auditor: 'admin', auditTime: '2026-04-16 14:27:56', creatorId: 1, createdAt: '2026-04-16 13:53:32', submittedAt: '2026-04-16 14:12:38' },
+        { id: 15, scene: '抖音信息流', value: '2500000000000', parameterName: 'channel_type | 渠道编码', usage: '用于抖音信息流推广', applicant: '周叶平', status: 1, auditResult: 0, creatorId: 2, createdAt: '2026-04-17 09:00:00', submittedAt: '2026-04-17 09:30:00' },
+        { id: 16, scene: '快手直播', value: '3200000000000', parameterName: 'activity_id | 活动编号', usage: '快手直播间推广活动', applicant: '吴小青', status: 1, auditResult: 2, auditRemark: '活动已结束，请更新后重新提交', auditor: 'admin', auditTime: '2026-04-16 16:00:00', creatorId: 2, createdAt: '2026-04-16 10:00:00', submittedAt: '2026-04-16 11:00:00' },
+      ],
+      // 回传节点
+      convNodes: [
+        { id: 1, nodeName: 'APP下载', convType: 0, eventCategory: '下载开户节点', eventDesc: '客户端上报启动埋点，不区分首次与次日，取合并判断。', eventJudge: '客户端finder', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-04-16 14:16:25' },
+        { id: 2, nodeName: '首次APP启动', convType: 1, eventCategory: '下载开户节点', eventDesc: '客户端上报启动埋点，不区分首次与次日，取合并判断。', eventJudge: '客户端finder', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+        { id: 3, nodeName: '次日留存APP启动', convType: 2, eventCategory: '下载开户节点', eventDesc: '客户端上报启动埋点，不区分首次与次日，取合并判断。', eventJudge: '客户端finder', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+        { id: 4, nodeName: '签署隐私协议', convType: 3, eventCategory: '下载开户节点', eventDesc: '首次下载app且启动，同时签署隐私协议（同意）', eventJudge: '客户端finder', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-04-16 14:16:21' },
+        { id: 5, nodeName: '用户注册', convType: 4, eventCategory: '下载开户节点', eventDesc: 'app内首次注册用户', eventJudge: 'H5（防方）finder', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+        { id: 6, nodeName: '预约开户', convType: 5, eventCategory: '下载开户节点', eventDesc: 'app内首次预约开户', eventJudge: 'H5（防方）finder', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+        { id: 7, nodeName: '开户成功', convType: 6, eventCategory: '下载开户节点', eventDesc: '开户表中用户的状态', eventJudge: '数仓业务表识别判断', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+        { id: 8, nodeName: '参加活动', convType: 7, eventCategory: '活动节点', eventDesc: '活动参与回传。', eventJudge: '数仓业务表识别判断', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+        { id: 9, nodeName: '账号绑定', convType: 8, eventCategory: '下载开户节点', eventDesc: '账号绑定后回传。', eventJudge: '数仓业务表识别判断', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+        { id: 10, nodeName: 'AI服务触发', convType: 9, eventCategory: 'AI投顾节点', eventDesc: 'AI服务触发后回传。', eventJudge: '数仓业务表识别判断', creatorName: '吴小青', createdAt: '2026-03-30 14:45:05', updatedAt: '2026-03-30 14:45:05' },
+      ],
+      // 投放链接
+      deliveryLinks: [
+        { id: 1, linkName: '抖音_小程序投放', channel: '抖音', content: '下载投放', promoMode: '网销线上推广', originUrl: 'http://webapps.yongjinbao.com.cn/ims', fullUrl: 'http://webapps.yongjinbao.com.cn/ims/channel_type=2430001244', shortUrl: 'http://g.gjyjb.com/rd/1QZYg', linkStatus: '生效中', creatorName: '周叶平', createdAt: '2026-04-01 15:19:06', updatedAt: '2026-04-01 15:19:06' },
+        { id: 2, linkName: '抖音_下载链路', channel: '抖音', content: 'AI投顾产品', promoMode: '网金线下推广', originUrl: 'http://webapps.yongjinbao.com.cn/ims', fullUrl: 'http://webapps.yongjinbao.com.cn/ims/channel_type=2430001244', shortUrl: 'http://g.gjyjb.com/rd/2AbCd', linkStatus: '生效中', creatorName: '吴小青', createdAt: '2026-04-01 15:19:06', updatedAt: '2026-04-01 15:19:06' },
+        { id: 3, linkName: '快手_下载链路', channel: '快手', content: '下载投放', promoMode: '网销线上推广', originUrl: 'http://webapps.yongjinbao.com.cn/ims', fullUrl: 'http://webapps.yongjinbao.com.cn/ims/channel_type=3100000000', shortUrl: 'http://g.gjyjb.com/rd/3XyZw', linkStatus: '生效中', creatorName: '吴小青', createdAt: '2026-04-01 15:19:06', updatedAt: '2026-04-01 15:19:06' },
+        { id: 4, linkName: '华为_营销活动', channel: '华为', content: '活动', promoMode: '网销线上推广', originUrl: 'http://webapps.yongjinbao.com.cn/activity', fullUrl: 'http://webapps.yongjinbao.com.cn/activity?channel=huawei', shortUrl: 'http://g.gjyjb.com/rd/4HmNk', linkStatus: '生效中', creatorName: '吴小青', createdAt: '2026-04-05 10:00:00', updatedAt: '2026-04-05 10:00:00' },
+        { id: 5, linkName: '雪球_财经课程', channel: '雪球', content: '财经课', promoMode: '网销线上推广', originUrl: 'http://webapps.yongjinbao.com.cn/course', fullUrl: 'http://webapps.yongjinbao.com.cn/course?channel=xueqiu', shortUrl: 'http://g.gjyjb.com/rd/5LpQr', linkStatus: '已失效', creatorName: '周叶平', createdAt: '2026-03-20 14:00:00', updatedAt: '2026-04-10 16:00:00' },
+      ],
+    };
+
+    // 格式化日期
+    const formatDateTime = (val) => {
+      if (!val) return '-';
+      return dayjs(val).format('YYYY-MM-DD HH:mm');
+    };
+
+    // 审核状态映射
+    const auditStatusMap = {
+      0: { label: '待审核', color: 'gold' },
+      1: { label: '已通过', color: 'blue' },
+      2: { label: '已驳回', color: 'red' },
+    };
+
+    // 参数状态映射
+    const paramStatusMap = {
+      0: { label: '禁用', color: 'default' },
+      1: { label: '启用', color: 'green' },
+    };
+
+    // 投放链接状态映射
+    const linkStatusMap = {
+      '生效中': { color: 'green' },
+      '已失效': { color: 'red' },
+      '暂停': { color: 'default' },
+    };
+
+    // ========== 投放参数管理页面 ==========
+    function PlacementParamPage() {
+      const [form] = Form.useForm();
+      const [dataSource, setDataSource] = useState(mockData.placementParams);
+      const [loading, setLoading] = useState(false);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [pageSize] = useState(10);
+      const [filters, setFilters] = useState({ paramName: '', paramKey: '', category: undefined });
+      const [modalVisible, setModalVisible] = useState(false);
+      const [editingRecord, setEditingRecord] = useState(null);
+      const [viewRecord, setViewRecord] = useState(null);
+
+      const filteredData = useMemo(() => {
+        return dataSource.filter(item => {
+          if (filters.paramName && !item.paramName.includes(filters.paramName)) return false;
+          if (filters.paramKey && !item.paramKey.includes(filters.paramKey)) return false;
+          if (filters.category && item.category !== filters.category) return false;
+          return true;
+        });
+      }, [dataSource, filters]);
+
+      const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredData.slice(start, start + pageSize);
+      }, [filteredData, currentPage, pageSize]);
+
+      const handleSearch = () => {
+        const values = form.getFieldsValue();
+        setFilters({ paramName: values.paramName || '', paramKey: values.paramKey || '', category: values.category });
+        setCurrentPage(1);
+      };
+
+      const handleReset = () => {
+        form.resetFields();
+        setFilters({ paramName: '', paramKey: '', category: undefined });
+        setCurrentPage(1);
+      };
+
+      const handleAdd = () => {
+        setEditingRecord(null);
+        setModalVisible(true);
+      };
+
+      const handleEdit = (record) => {
+        setEditingRecord(record);
+        setModalVisible(true);
+      };
+
+      const handleView = (record) => {
+        setViewRecord(record);
+      };
+
+      const handleDelete = (id) => {
+        setDataSource(dataSource.filter(item => item.id !== id));
+        message.success('删除成功');
+      };
+
+      const handleModalOk = () => {
+        form.validateFields().then(values => {
+          if (editingRecord) {
+            setDataSource(dataSource.map(item => item.id === editingRecord.id ? { ...item, ...values, updatedAt: dayjs().format('YYYY-MM-DD HH:mm') } : item));
+            message.success('更新成功');
+          } else {
+            const newRecord = { ...values, id: Date.now(), status: 1, auditStatus: 0, createdAt: dayjs().format('YYYY-MM-DD HH:mm'), updatedAt: dayjs().format('YYYY-MM-DD HH:mm'), creatorName: 'admin' };
+            setDataSource([...dataSource, newRecord]);
+            message.success('创建成功');
+          }
+          setModalVisible(false);
+          form.resetFields();
+        });
+      };
+
+      const columns = [
+        { title: '参数名称', dataIndex: 'paramName', width: 180, render: (val, record) => <a onClick={() => handleView(record)}>{val}</a> },
+        { title: '参数Key', dataIndex: 'paramKey', width: 140 },
+        { title: '参数值', dataIndex: 'paramValue', width: 150 },
+        { title: '分类', dataIndex: 'category', width: 100 },
+        { title: '管理员', dataIndex: 'manager', width: 100 },
+        { title: '状态', dataIndex: 'status', width: 80, render: (val) => <Tag color={paramStatusMap[val]?.color}>{paramStatusMap[val]?.label}</Tag> },
+        { title: '审核状态', dataIndex: 'auditStatus', width: 90, render: (val) => <Tag color={auditStatusMap[val]?.color}>{auditStatusMap[val]?.label}</Tag> },
+        { title: '更新时间', dataIndex: 'updatedAt', width: 160, render: formatDateTime },
+        { title: '操作', key: 'action', width: 120, render: (_, record) => (
+          <Space>
+            <a onClick={() => handleEdit(record)}>编辑</a>
+            <Popconfirm title="确认删除?" onConfirm={() => handleDelete(record.id)}><a style={{ color: '#ff4d4f' }}>删除</a></Popconfirm>
+          </Space>
+        )},
+      ];
+
+      return (
+        <Card bordered={false} className="page-card">
+          <div className="toolbar">
+            <Form form={form} layout="inline" className="filter-form">
+              <Form.Item label="参数名称" name="paramName"><Input placeholder="请输入参数名称" style={{ width: 160 }} /></Form.Item>
+              <Form.Item label="参数Key" name="paramKey"><Input placeholder="请输入参数Key" style={{ width: 140 }} /></Form.Item>
+              <Form.Item label="参数分类" name="category">
+                <Select placeholder="全部" allowClear style={{ width: 120 }} options={[{ label: '场景参数', value: '场景参数' }, { label: '人员参数', value: '人员参数' }, { label: '活动参数', value: '活动参数' }, { label: '产品参数', value: '产品参数' }]} />
+              </Form.Item>
+            </Form>
+            <div className="toolbar-actions">
+              <Space>
+                <Button onClick={handleSearch}>查询</Button>
+                <Button onClick={handleReset}>重置</Button>
+              </Space>
+              <Button type="primary" onClick={handleAdd}>+ 新增参数</Button>
+            </div>
+          </div>
+          <Table rowKey="id" columns={columns} dataSource={paginatedData} loading={loading} pagination={{ current: currentPage, pageSize, total: filteredData.length, showTotal: (t) => `总计 ${t} 条`, onChange: (page) => setCurrentPage(page) }} scroll={{ x: 1200 }} />
+
+          <Modal title={editingRecord ? '编辑投放参数' : '新增投放参数'} open={modalVisible} onOk={handleModalOk} onCancel={() => { setModalVisible(false); form.resetFields(); }} width={600}>
+            <Form form={form} layout="vertical" className="modal-form" initialValues={editingRecord || { category: '场景参数', status: true }}>
+              <Form.Item label="参数名称" name="paramName" rules={[{ required: true, message: '请输入参数名称' }]}><Input placeholder="请输入参数名称" /></Form.Item>
+              <Form.Item label="参数Key" name="paramKey" rules={[{ required: true, message: '请输入参数Key' }]}><Input placeholder="请输入参数Key" /></Form.Item>
+              <Form.Item label="参数值" name="paramValue"><Input placeholder="请输入参数值" /></Form.Item>
+              <Form.Item label="参数分类" name="category" rules={[{ required: true }]}>
+                <Select options={[{ label: '场景参数', value: '场景参数' }, { label: '人员参数', value: '人员参数' }, { label: '活动参数', value: '活动参数' }, { label: '产品参数', value: '产品参数' }]} />
+              </Form.Item>
+              <Form.Item label="参数应用说明" name="paramUsage"><Input.TextArea rows={3} placeholder="请输入参数应用说明" /></Form.Item>
+              <Form.Item label="参数管理员" name="manager"><Input placeholder="请输入管理员姓名" /></Form.Item>
+              <Form.Item label="状态" name="status" valuePropName="checked"><Switch checkedChildren="启用" unCheckedChildren="禁用" /></Form.Item>
+            </Form>
+          </Modal>
+
+          <Modal title="投放参数详情" open={!!viewRecord} onOk={() => setViewRecord(null)} onCancel={() => setViewRecord(null)} footer={null} width={600}>
+            {viewRecord && (
+              <div>
+                <div className="detail-section">
+                  <div className="detail-section-title">基本信息</div>
+                  <div className="detail-row"><span className="detail-label">参数名称</span><span className="detail-value">{viewRecord.paramName}</span></div>
+                  <div className="detail-row"><span className="detail-label">参数Key</span><span className="detail-value">{viewRecord.paramKey}</span></div>
+                  <div className="detail-row"><span className="detail-label">参数值</span><span className="detail-value">{viewRecord.paramValue}</span></div>
+                  <div className="detail-row"><span className="detail-label">参数分类</span><span className="detail-value">{viewRecord.category}</span></div>
+                  <div className="detail-row"><span className="detail-label">参数管理员</span><span className="detail-value">{viewRecord.manager}</span></div>
+                </div>
+                <div className="detail-section">
+                  <div className="detail-section-title">详细说明</div>
+                  <div className="detail-row"><span className="detail-label">参数应用</span><span className="detail-value">{viewRecord.paramUsage}</span></div>
+                </div>
+                <div className="detail-section">
+                  <div className="detail-section-title">状态信息</div>
+                  <div className="detail-row"><span className="detail-label">状态</span><span className="detail-value"><Tag color={paramStatusMap[viewRecord.status]?.color}>{paramStatusMap[viewRecord.status]?.label}</Tag></span></div>
+                  <div className="detail-row"><span className="detail-label">审核状态</span><span className="detail-value"><Tag color={auditStatusMap[viewRecord.auditStatus]?.color}>{auditStatusMap[viewRecord.auditStatus]?.label}</Tag></span></div>
+                  <div className="detail-row"><span className="detail-label">创建人</span><span className="detail-value">{viewRecord.creatorName}</span></div>
+                  <div className="detail-row"><span className="detail-label">创建时间</span><span className="detail-value">{formatDateTime(viewRecord.createdAt)}</span></div>
+                  <div className="detail-row"><span className="detail-label">更新时间</span><span className="detail-value">{formatDateTime(viewRecord.updatedAt)}</span></div>
+                </div>
+              </div>
+            )}
+          </Modal>
+        </Card>
+      );
+    }
+
+    // ========== 审核工作流页面 ==========
+    function AuditPage() {
+      const [form] = Form.useForm();
+      const [dataSource, setDataSource] = useState(mockData.myParams);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [pageSize] = useState(10);
+      const [filters, setFilters] = useState({});
+      const [auditModalVisible, setAuditModalVisible] = useState(false);
+      const [selectedRecord, setSelectedRecord] = useState(null);
+      const [auditForm] = Form.useForm();
+
+      const filteredData = useMemo(() => {
+        return dataSource.filter(item => {
+          if (filters.scene && !item.scene.includes(filters.scene)) return false;
+          if (filters.auditResult !== undefined && item.auditResult !== filters.auditResult) return false;
+          if (filters.applicant && !item.applicant.includes(filters.applicant)) return false;
+          return true;
+        });
+      }, [dataSource, filters]);
+
+      const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filteredData.slice(start, start + pageSize);
+      }, [filteredData, currentPage, pageSize]);
+
+      const handleSearch = () => {
+        const values = form.getFieldsValue();
+        setFilters(values);
+        setCurrentPage(1);
+      };
+
+      const handleReset = () => {
+        form.resetFields();
+        setFilters({});
+        setCurrentPage(1);
+      };
+
+      const handleAudit = (record) => {
+        setSelectedRecord(record);
+        auditForm.setFieldsValue({ auditResult: 0, auditRemark: '' });
+        setAuditModalVisible(true);
+      };
+
+      const handleAuditSubmit = () => {
+        auditForm.validateFields().then(values => {
+          setDataSource(dataSource.map(item => item.id === selectedRecord.id ? { ...item, auditResult: values.auditResult, auditRemark: values.auditRemark, auditor: 'admin', auditTime: dayjs().format('YYYY-MM-DD HH:mm') } : item));
+          setAuditModalVisible(false);
+          message.success(values.auditResult === 1 ? '审核通过' : '已驳回');
+        });
+      };
+
+      const columns = [
+        { title: '参数应用场景', dataIndex: 'scene', width: 140 },
+        { title: '参数值', dataIndex: 'value', width: 150 },
+        { title: '参数名', dataIndex: 'parameterName', width: 180 },
+        { title: '参数使用说明', dataIndex: 'usage' },
+        { title: '申请人', dataIndex: 'applicant', width: 90 },
+        { title: '提交时间', dataIndex: 'submittedAt', width: 160, render: formatDateTime },
+        { title: '审核状态', dataIndex: 'auditResult', width: 100, render: (val) => <Tag color={auditStatusMap[val]?.color}>{auditStatusMap[val]?.label}</Tag> },
+        { title: '操作', key: 'action', width: 100, render: (_, record) => <a onClick={() => handleAudit(record)}>{record.auditResult === 0 ? '审核' : '查看'}</a> },
+      ];
+
+      return (
+        <Card bordered={false} className="page-card">
+          <div className="toolbar">
+            <Form form={form} layout="inline" className="filter-form">
+              <Form.Item label="参数应用场景" name="scene"><Input placeholder="请输入场景名称" style={{ width: 160 }} /></Form.Item>
+              <Form.Item label="审核状态" name="auditResult">
+                <Select placeholder="全部" allowClear style={{ width: 120 }} options={[{ label: '待审核', value: 0 }, { label: '已通过', value: 1 }, { label: '已驳回', value: 2 }]} />
+              </Form.Item>
+              <Form.Item label="申请人" name="applicant"><Input placeholder="请输入申请人" style={{ width: 120 }} /></Form.Item>
+            </Form>
+            <div className="toolbar-actions">
+              <Button onClick={handleSearch}>查询</Button>
+              <Button onClick={handleReset}>重置</Button>
+            </div>
+          </div>
+          <Table rowKey="id" columns={columns} dataSource={paginatedData} pagination={{ current: currentPage, pageSize, total: filteredData.length, onChange: (page) => setCurrentPage(page) }} scroll={{ x: 1100 }} />
+
+          <Modal title={selectedRecord?.auditResult === 0 ? '审核参数' : '查看审核详情'} open={auditModalVisible} onOk={handleAuditSubmit} onCancel={() => setAuditModalVisible(false)} okText={selectedRecord?.auditResult === 0 ? '提交审核' : '关闭'}>
+            {selectedRecord && (
+              <div>
+                <Descriptions column={1} bordered size="small" style={{ marginBottom: 16 }}>
+                  <Descriptions.Item label="参数应用场景">{selectedRecord.scene}</Descriptions.Item>
+                  <Descriptions.Item label="参数值">{selectedRecord.value}</Descriptions.Item>
+                  <Descriptions.Item label="参数名">{selectedRecord.parameterName}</Descriptions.Item>
+                  <Descriptions.Item label="参数使用说明">{selectedRecord.usage}</Descriptions.Item>
+                  <Descriptions.Item label="申请人">{selectedRecord.applicant}</Descriptions.Item>
+                  <Descriptions.Item label="提交时间">{formatDateTime(selectedRecord.submittedAt)}</Descriptions.Item>
+                </Descriptions>
+                {selectedRecord.auditResult === 0 && (
+                  <Form form={auditForm} layout="vertical" className="modal-form">
+                    <Form.Item label="审核结果" name="auditResult" rules={[{ required: true, message: '请选择审核结果' }]}>
+                      <Select options={[{ label: '通过', value: 1 }, { label: '驳回', value: 2 }]} />
+                    </Form.Item>
+                    <Form.Item label="备注" name="auditRemark">
+                      <Input.TextArea rows={3} placeholder="请输入审核备注（驳回时必填）" />
+                    </Form.Item>
+                  </Form>
+                )}
+                {selectedRecord.auditResult !== 0 && (
+                  <div>
+                    <div style={{ marginBottom: 8 }}><strong>审核结果：</strong><Tag color={auditStatusMap[selectedRecord.auditResult]?.color}>{auditStatusMap[selectedRecord.auditResult]?.label}</Tag></div>
+                    {selectedRecord.auditRemark && <div style={{ marginBottom: 8 }}><strong>驳回原因：</strong>{selectedRecord.auditRemark}</div>}
+                    <div><strong>审核人：</strong>{selectedRecord.auditor}</div>
+                    <div><strong>审核时间：</strong>{formatDateTime(selectedRecord.auditTime)}</div>
+                  </div>
+                )}
+              </div>
+            )}
+          </Modal>
+        </Card>
+      );
+    }
+
+    // ========== 回传节点管理页面 ==========
+    function ConvNodePage() {
+      const [form] = Form.useForm();
+      const [dataSource, setDataSource] = useState(mockData.convNodes);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [pageSize] = useState(10);
+      const [modalVisible, setModalVisible] = useState(false);
+      const [editingRecord, setEditingRecord] = useState(null);
+
+      const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return dataSource.slice(start, start + pageSize);
+      }, [dataSource, currentPage, pageSize]);
+
+      const handleAdd = () => {
+        setEditingRecord(null);
+        setModalVisible(true);
+      };
+
+      const handleEdit = (record) => {
+        setEditingRecord(record);
+        setModalVisible(true);
+      };
+
+      const handleDelete = (id) => {
+        setDataSource(dataSource.filter(item => item.id !== id));
+        message.success('删除成功');
+      };
+
+      const handleModalOk = () => {
+        form.validateFields().then(values => {
+          if (editingRecord) {
+            setDataSource(dataSource.map(item => item.id === editingRecord.id ? { ...item, ...values, updatedAt: dayjs().format('YYYY-MM-DD HH:mm') } : item));
+            message.success('更新成功');
+          } else {
+            const newRecord = { ...values, id: Date.now(), convType: dataSource.length, createdAt: dayjs().format('YYYY-MM-DD HH:mm'), updatedAt: dayjs().format('YYYY-MM-DD HH:mm'), creatorName: 'admin' };
+            setDataSource([...dataSource, newRecord]);
+            message.success('创建成功');
+          }
+          setModalVisible(false);
+          form.resetFields();
+        });
+      };
+
+      const columns = [
+        { title: '节点名称', dataIndex: 'nodeName', width: 140 },
+        { title: 'convType', dataIndex: 'convType', width: 90 },
+        { title: '事件分类', dataIndex: 'eventCategory', width: 120 },
+        { title: '事件说明', dataIndex: 'eventDesc', ellipsis: true },
+        { title: '事件判断', dataIndex: 'eventJudge', width: 140 },
+        { title: '创建人', dataIndex: 'creatorName', width: 100 },
+        { title: '更新时间', dataIndex: 'updatedAt', width: 160, render: formatDateTime },
+        { title: '操作', key: 'action', width: 120, render: (_, record) => (
+          <Space>
+            <a onClick={() => handleEdit(record)}>编辑</a>
+            <Popconfirm title="确认删除?" onConfirm={() => handleDelete(record.id)}><a style={{ color: '#ff4d4f' }}>删除</a></Popconfirm>
+          </Space>
+        )},
+      ];
+
+      return (
+        <Card bordered={false} className="page-card">
+          <div className="toolbar">
+            <div></div>
+            <Button type="primary" onClick={handleAdd}>+ 新增节点</Button>
+          </div>
+          <Table rowKey="id" columns={columns} dataSource={paginatedData} pagination={{ current: currentPage, pageSize, total: dataSource.length, onChange: (page) => setCurrentPage(page) }} scroll={{ x: 1000 }} />
+
+          <Modal title={editingRecord ? '编辑回传节点' : '新增回传节点'} open={modalVisible} onOk={handleModalOk} onCancel={() => { setModalVisible(false); form.resetFields(); }} width={600}>
+            <Form form={form} layout="vertical" className="modal-form" initialValues={editingRecord || {}}>
+              <Form.Item label="节点名称" name="nodeName" rules={[{ required: true, message: '请输入节点名称' }]}><Input placeholder="请输入节点名称" /></Form.Item>
+              <Form.Item label="事件分类" name="eventCategory" rules={[{ required: true, message: '请输入事件分类' }]}><Input placeholder="请输入事件分类" /></Form.Item>
+              <Form.Item label="事件说明" name="eventDesc"><Input.TextArea rows={2} placeholder="请输入事件说明" /></Form.Item>
+              <Form.Item label="事件判断" name="eventJudge"><Input placeholder="请输入事件判断方式" /></Form.Item>
+            </Form>
+          </Modal>
+        </Card>
+      );
+    }
+
+    // ========== 投放链接管理页面 ==========
+    function DeliveryLinkPage() {
+      const [form] = Form.useForm();
+      const [dataSource, setDataSource] = useState(mockData.deliveryLinks);
+      const [currentPage, setCurrentPage] = useState(1);
+      const [pageSize] = useState(10);
+      const [modalVisible, setModalVisible] = useState(false);
+      const [editingRecord, setEditingRecord] = useState(null);
+
+      const paginatedData = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return dataSource.slice(start, start + pageSize);
+      }, [dataSource, currentPage, pageSize]);
+
+      const handleAdd = () => {
+        setEditingRecord(null);
+        setModalVisible(true);
+      };
+
+      const handleEdit = (record) => {
+        setEditingRecord(record);
+        setModalVisible(true);
+      };
+
+      const handleDelete = (id) => {
+        setDataSource(dataSource.filter(item => item.id !== id));
+        message.success('删除成功');
+      };
+
+      const handleModalOk = () => {
+        form.validateFields().then(values => {
+          if (editingRecord) {
+            setDataSource(dataSource.map(item => item.id === editingRecord.id ? { ...item, ...values, updatedAt: dayjs().format('YYYY-MM-DD HH:mm') } : item));
+            message.success('更新成功');
+          } else {
+            const newRecord = { ...values, id: Date.now(), linkStatus: '生效中', shortUrl: `http://g.gjyjb.com/rd/${Math.random().toString(36).substr(2, 5)}`, createdAt: dayjs().format('YYYY-MM-DD HH:mm'), updatedAt: dayjs().format('YYYY-MM-DD HH:mm'), creatorName: 'admin' };
+            setDataSource([...dataSource, newRecord]);
+            message.success('创建成功');
+          }
+          setModalVisible(false);
+          form.resetFields();
+        });
+      };
+
+      const columns = [
+        { title: '链接名称', dataIndex: 'linkName', width: 180 },
+        { title: '投放渠道', dataIndex: 'channel', width: 100 },
+        { title: '投放内容', dataIndex: 'content', width: 100 },
+        { title: '推广模式', dataIndex: 'promoMode', width: 120 },
+        { title: '短链地址', dataIndex: 'shortUrl', width: 200, render: (val) => <a href={val} target="_blank" rel="noopener noreferrer">{val}</a> },
+        { title: '状态', dataIndex: 'linkStatus', width: 90, render: (val) => <Tag color={linkStatusMap[val]?.color}>{val}</Tag> },
+        { title: '创建人', dataIndex: 'creatorName', width: 90 },
+        { title: '创建时间', dataIndex: 'createdAt', width: 160, render: formatDateTime },
+        { title: '操作', key: 'action', width: 120, render: (_, record) => (
+          <Space>
+            <a onClick={() => handleEdit(record)}>编辑</a>
+            <Popconfirm title="确认删除?" onConfirm={() => handleDelete(record.id)}><a style={{ color: '#ff4d4f' }}>删除</a></Popconfirm>
+          </Space>
+        )},
+      ];
+
+      return (
+        <Card bordered={false} className="page-card">
+          <div className="toolbar">
+            <div></div>
+            <Button type="primary" onClick={handleAdd}>+ 新增投放链接</Button>
+          </div>
+          <Table rowKey="id" columns={columns} dataSource={paginatedData} pagination={{ current: currentPage, pageSize, total: dataSource.length, onChange: (page) => setCurrentPage(page) }} scroll={{ x: 1200 }} />
+
+          <Modal title={editingRecord ? '编辑投放链接' : '新增投放链接'} open={modalVisible} onOk={handleModalOk} onCancel={() => { setModalVisible(false); form.resetFields(); }} width={600}>
+            <Form form={form} layout="vertical" className="modal-form" initialValues={editingRecord || { channel: '抖音', content: '下载投放', promoMode: '网销线上推广' }}>
+              <Form.Item label="链接名称" name="linkName" rules={[{ required: true, message: '请输入链接名称' }]}><Input placeholder="请输入链接名称" /></Form.Item>
+              <Form.Item label="投放渠道" name="channel" rules={[{ required: true }]}>
+                <Select options={[{ label: '抖音', value: '抖音' }, { label: '快手', value: '快手' }, { label: '华为', value: '华为' }, { label: '雪球', value: '雪球' }]} />
+              </Form.Item>
+              <Form.Item label="投放内容" name="content" rules={[{ required: true }]}>
+                <Select options={[{ label: '下载投放', value: '下载投放' }, { label: 'AI投顾产品', value: 'AI投顾产品' }, { label: '财经课', value: '财经课' }, { label: '活动', value: '活动' }]} />
+              </Form.Item>
+              <Form.Item label="推广模式" name="promoMode" rules={[{ required: true }]}>
+                <Select options={[{ label: '网销线上推广', value: '网销线上推广' }, { label: '网金线下推广', value: '网金线下推广' }]} />
+              </Form.Item>
+              <Form.Item label="原始投放链接" name="originUrl" rules={[{ required: true, message: '请输入原始投放链接' }]}><Input placeholder="请输入原始投放链接" /></Form.Item>
+            </Form>
+          </Modal>
+        </Card>
+      );
+    }
+
+    // ========== 需求反馈浮窗 ==========
+    function FeedbackModal() {
+      const [visible, setVisible] = useState(false);
+      const [form] = Form.useForm();
+
+      const handleSubmit = () => {
+        form.validateFields().then(values => {
+          const blob = new Blob([JSON.stringify(values, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `需求反馈_${dayjs().format('YYYYMMDD_HHmmss')}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          setVisible(false);
+          form.resetFields();
+          message.success('反馈已下载');
+        });
+      };
+
+      return (
+        <>
+          <div className="feedback-btn" onClick={() => setVisible(true)} title="需求反馈">💡</div>
+          <Modal title="💡 需求反馈" open={visible} onOk={handleSubmit} onCancel={() => setVisible(false)} okText="提交并下载">
+            <Form form={form} layout="vertical" className="feedback-form">
+              <Form.Item label="您的姓名" name="name" rules={[{ required: true, message: '请输入您的姓名' }]}><Input placeholder="请输入您的姓名" /></Form.Item>
+              <Form.Item label="反馈类型" name="type" rules={[{ required: true }]}>
+                <Select placeholder="请选择反馈类型" options={[{ label: '功能建议', value: '功能建议' }, { label: 'Bug反馈', value: 'Bug反馈' }, { label: '体验优化', value: '体验优化' }, { label: '其他', value: '其他' }]} />
+              </Form.Item>
+              <Form.Item label="发现的问题或新需求" name="content" rules={[{ required: true, message: '请描述您发现的问题或新需求' }]}><Input.TextArea rows={4} placeholder="请详细描述您发现的问题或新需求" /></Form.Item>
+              <Form.Item label="期望的解决方案（可选）" name="solution"><Input.TextArea rows={2} placeholder="请描述您期望的解决方案" /></Form.Item>
+              <Form.Item label="联系方式（可选）" name="contact"><Input placeholder="请输入邮箱或手机号" /></Form.Item>
+            </Form>
+          </Modal>
+        </>
+      );
+    }
+
+    // ========== 主应用 ==========
+    function App() {
+      const [currentKey, setCurrentKey] = useState('placement-params');
+      const [currentUser] = useState({ name: '管理员', role: 'ADMIN' });
+
+      const menuItems = [
+        { key: 'placement-params', icon: '📊', label: '投放参数管理' },
+        { key: 'my-audit', icon: '📋', label: '我的参数审核' },
+        { key: 'conv-nodes', icon: '🔗', label: '回传节点管理' },
+        { key: 'delivery-links', icon: '🔗', label: '投放链接管理' },
+      ];
+
+      const renderContent = () => {
+        switch (currentKey) {
+          case 'placement-params': return <PlacementParamPage />;
+          case 'my-audit': return <AuditPage />;
+          case 'conv-nodes': return <ConvNodePage />;
+          case 'delivery-links': return <DeliveryLinkPage />;
+          default: return <PlacementParamPage />;
+        }
+      };
+
+      const getPageTitle = () => {
+        const item = menuItems.find(i => i.key === currentKey);
+        return item ? item.label : '';
+      };
+
+      return (
+        <div className="app-container">
+          <div className="sidebar">
+            <div className="logo">
+              <div className="logo-icon">C</div>
+              <span>渠道管理平台</span>
+            </div>
+            <div className="menu-group">核心功能</div>
+            {menuItems.map(item => (
+              <div key={item.key} className={`menu-item ${currentKey === item.key ? 'active' : ''}`} onClick={() => setCurrentKey(item.key)}>
+                <span className="icon">{item.icon}</span>
+                <span>{item.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="main">
+            <div className="header">
+              <div className="header-title">{getPageTitle()}</div>
+              <div className="header-user">
+                <span>{currentUser.name}</span>
+                <div className="user-avatar">{currentUser.name[0]}</div>
+              </div>
+            </div>
+            <div className="content">
+              {renderContent()}
+            </div>
+          </div>
+          <FeedbackModal />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
