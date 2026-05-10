@@ -9,6 +9,7 @@ import {
   routeMetaList,
   routeMetaMap,
 } from '../router/routeMeta.jsx';
+import AiAssistant from '../components/AiAssistant';
 
 const { Header, Sider, Content } = Layout;
 
@@ -143,6 +144,7 @@ export function AppLayout() {
           <Outlet />
         </Content>
       </Layout>
+      <AiAssistant />
     </Layout>
   );
 }
