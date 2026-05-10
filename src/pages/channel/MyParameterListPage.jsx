@@ -11,12 +11,11 @@ const STATUS_MAP = {
   2: { label: '已归档', color: 'green' },
 };
 
-// 审核状态映射
+// 审核状态映射: 0=待审核 1=已通过 2=已驳回
 const AUDIT_MAP = {
   0: { label: '待审核', color: 'default' },
-  1: { label: '处理中', color: 'processing' },
-  2: { label: '已完成', color: 'success' },
-  3: { label: '驳回', color: 'error' },
+  1: { label: '已通过', color: 'success' },
+  2: { label: '已驳回', color: 'error' },
 };
 
 export function MyParameterListPage() {
@@ -78,9 +77,9 @@ export function MyParameterListPage() {
         </Button>
       ),
     },
-    { title: '参数值', dataIndex: 'value', width: 130 },
-    { title: '参数名', dataIndex: 'parameterName', width: 180 },
-    { title: '参数使用说明', dataIndex: 'usage' },
+    { title: '参数值', dataIndex: 'value', width: 160 },
+    { title: '参数名', dataIndex: 'parameterName', width: 210 },
+    { title: '参数使用说明', dataIndex: 'usage', width: 280 },
     {
       title: '审核状态',
       dataIndex: 'auditResult',
@@ -201,9 +200,8 @@ export function MyParameterListPage() {
           <Form.Item label="审核状态" name="auditResult">
             <Select placeholder="全部" allowClear style={{ width: 140 }} options={[
               { label: '待审核', value: 0 },
-              { label: '处理中', value: 1 },
-              { label: '已完成', value: 2 },
-              { label: '驳回', value: 3 },
+              { label: '已通过', value: 1 },
+              { label: '已驳回', value: 2 },
             ]} />
           </Form.Item>
         </Form>
@@ -230,7 +228,7 @@ export function MyParameterListPage() {
           showSizeChanger: false,
           showTotal: (t, range) => `当前第${range[0]}-${range[1]}条 总计${t}条`,
         }}
-        scroll={{ x: 1280 }}
+        scroll={{ x: 1420 }}
       />
     </Card>
   );

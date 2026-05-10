@@ -66,16 +66,17 @@ export function CallbackStrategyListPage() {
       ),
     },
     { title: '应用渠道', dataIndex: 'channel', width: 140 },
-    { title: '业务编号', dataIndex: 'bizNo', width: 120 },
-    { title: '策略规则', dataIndex: 'strategyRule', width: 110 },
+    { title: '渠道编码', dataIndex: 'bizNo', width: 120 },
+    { title: '策略模型', dataIndex: 'strategyRule', width: 110 },
     {
       title: '回传比例',
       dataIndex: 'callbackRatio',
       width: 90,
       render: (value) => (value != null ? `${value}%` : '-'),
     },
+    { title: '策略节点概览', dataIndex: 'nodeOverview', width: 220 },
     { title: '广告商', dataIndex: 'adInfo', width: 90 },
-    { title: '策略参数', dataIndex: 'strategyParams', width: 220 },
+    { title: '策略监测链接', dataIndex: 'strategyParams', width: 220 },
     { title: '创建人', dataIndex: 'creatorName', width: 90 },
     { title: '提交时间', dataIndex: 'createdAt', width: 170, render: formatDateTime },
     {
@@ -155,6 +156,7 @@ export function CallbackStrategyListPage() {
               { label: '自定义模型', value: '自定义模型' },
               { label: '下载回传模型', value: '下载回传模型' },
               { label: '下载留存模型', value: '下载留存模型' },
+              { label: 'AI投顾前置收费模型', value: 'AI投顾前置收费模型' },
               { label: '增值产品签约模型', value: '增值产品签约模型' },
               { label: '客户资产信息模型', value: '客户资产信息模型' },
             ]}
@@ -192,7 +194,7 @@ export function CallbackStrategyListPage() {
           showSizeChanger: false,
           showTotal: (total, range) => `当前第${range[0]}-${range[1]}条 总计${total}条`,
         }}
-        scroll={{ x: 1860 }}
+        scroll={{ x: 2080 }}
       />
     </Card>
   );

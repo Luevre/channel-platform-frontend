@@ -9,6 +9,7 @@ export function ParamDictPage() {
   const [loading, setLoading] = useState(false);
   const [dictList, setDictList] = useState([]);
   const [paramName, setParamName] = useState('');
+  const [paramKey, setParamKey] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,6 +23,7 @@ export function ParamDictPage() {
         ]);
         setDictList(dictRes?.data || []);
         setParamName(paramRes?.data?.paramName || '');
+        setParamKey(paramRes?.data?.paramKey || '');
       } finally {
         setLoading(false);
       }
@@ -36,7 +38,7 @@ export function ParamDictPage() {
       width: 250,
     },
     {
-      title: '对应tabKey',
+      title: paramKey ? `对应${paramKey}` : '对应tabKey',
       dataIndex: 'tabKey',
       width: 250,
     },

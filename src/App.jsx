@@ -1,6 +1,7 @@
 import { Navigate, useRoutes } from 'react-router-dom';
 import { AppLayout } from './layouts/AppLayout';
 import { CallbackNodeFormPage } from './pages/callback/CallbackNodeFormPage';
+import { CallbackNodeDetailPage } from './pages/callback/CallbackNodeDetailPage';
 import { CallbackNodeListPage } from './pages/callback/CallbackNodeListPage';
 import { CallbackStrategyFormPage } from './pages/callback/CallbackStrategyFormPage';
 import { CallbackStrategyListPage } from './pages/callback/CallbackStrategyListPage';
@@ -14,7 +15,11 @@ import { ParamDictPage } from './pages/channel/ParamDictPage';
 import { PlacementReviewDetailPage } from './pages/channel/PlacementReviewDetailPage';
 import { PlacementReviewListPage } from './pages/channel/PlacementReviewListPage';
 import { DeliveryLinkFormPage } from './pages/delivery/DeliveryLinkFormPage';
+import { DeliveryLinkDetailPage } from './pages/delivery/DeliveryLinkDetailPage';
 import { DeliveryLinkListPage } from './pages/delivery/DeliveryLinkListPage';
+import { MyDeliverySceneListPage } from './pages/delivery/MyDeliverySceneListPage';
+import { MyDeliverySceneFormPage } from './pages/delivery/MyDeliverySceneFormPage';
+import { DeliverySceneReviewListPage } from './pages/delivery/DeliverySceneReviewListPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { routeMetaList } from './router/routeMeta.jsx';
 // ↓ 新增这两行
@@ -52,15 +57,21 @@ export default function App() {
         { path: 'callback/node-management', element: <CallbackNodeListPage /> },
         { path: 'callback/node-management/create', element: <CallbackNodeFormPage mode="create" /> },
         { path: 'callback/node-management/edit', element: <CallbackNodeFormPage mode="edit" /> },
-        { path: 'callback/my-node', element: createPlaceholder('我的节点管理', '页面建设中，原型图完善后补充。') },
-        { path: 'callback/node-review', element: createPlaceholder('回传节点审核', '页面建设中，原型图完善后补充。') },
+        { path: 'callback/node-management/view', element: <CallbackNodeDetailPage /> },
+        {
+          path: 'callback/strategy-review',
+          element: createPlaceholder('回传策略审核', '原型绘制完成后补充页面内容。'),
+        },
         { path: 'callback/strategy-management', element: <CallbackStrategyListPage /> },
         { path: 'callback/strategy-management/create', element: <CallbackStrategyFormPage /> },
         { path: 'delivery/link-management', element: <DeliveryLinkListPage /> },
         { path: 'delivery/link-management/create', element: <DeliveryLinkFormPage mode="create" /> },
         { path: 'delivery/link-management/edit', element: <DeliveryLinkFormPage mode="edit" /> },
-        { path: 'delivery/my-scene', element: createPlaceholder('我的投放场景', '页面建设中，原型图完善后补充。') },
-        { path: 'delivery/scene-review', element: createPlaceholder('投放场景审核', '页面建设中，原型图完善后补充。') },
+        { path: 'delivery/link-management/view', element: <DeliveryLinkDetailPage /> },
+        { path: 'delivery/my-scene', element: <MyDeliverySceneListPage /> },
+        { path: 'delivery/my-scene/create', element: <MyDeliverySceneFormPage mode="create" /> },
+        { path: 'delivery/my-scene/edit', element: <MyDeliverySceneFormPage mode="edit" /> },
+        { path: 'delivery/scene-review', element: <DeliverySceneReviewListPage /> },
         {
           path: 'delivery/deeplink',
           element: createPlaceholder('deeplink管理', '原型中暂未给出 deeplink 页面，先保留菜单入口。'),
@@ -68,10 +79,6 @@ export default function App() {
         {
           path: 'public/data-management',
           element: createPlaceholder('公域数据管理', '原型中暂未给出公域数据页面，后续可继续扩展。'),
-        },
-        {
-          path: 'report/performance',
-          element: createPlaceholder('渠道投放成效管理', '原型中暂未给出成效页面，后续可继续扩展。'),
         },
       ],
     },

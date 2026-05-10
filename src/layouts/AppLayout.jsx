@@ -88,7 +88,7 @@ export function AppLayout() {
     <Layout className="app-shell">
       {isMobile ? null : (
         <Sider width={248} className="app-sider" theme="dark">
-          <div className="app-logo">渠道投放管理平台</div>
+          <div className="app-logo">渠道投放中台</div>
           <Menu
             theme="dark"
             mode="inline"
@@ -101,7 +101,7 @@ export function AppLayout() {
         </Sider>
       )}
       <Drawer
-        title="渠道投放管理平台"
+        title="渠道投放中台"
         placement="left"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
@@ -120,7 +120,7 @@ export function AppLayout() {
         <Header className="app-header">
           {isMobile ? (
             <div className="mobile-topbar">
-              <div className="mobile-topbar-title">渠道投放管理平台</div>
+              <div className="mobile-topbar-title">渠道投放中台</div>
               <Button
                 type="text"
                 icon={<MenuOutlined />}

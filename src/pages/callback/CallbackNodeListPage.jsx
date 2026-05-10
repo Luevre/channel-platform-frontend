@@ -53,8 +53,9 @@ export function CallbackNodeListPage() {
       title: '节点名',
       dataIndex: 'nodeName',
       width: 110,
-      render: (value) => (
-        <Button type="link" className="table-action-button">
+      render: (value, record) => (
+        <Button type="link" className="table-action-button"
+          onClick={() => navigate(`/callback/node-management/view?id=${record.id}`)}>
           {value}
         </Button>
       ),
@@ -138,7 +139,7 @@ export function CallbackNodeListPage() {
             <Button onClick={handleReset}>重置</Button>
           </Space>
           <Button type="primary" onClick={() => navigate('/callback/node-management/create')}>
-            + 新增参数
+            + 新增节点
           </Button>
         </div>
       </div>

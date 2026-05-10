@@ -3,7 +3,6 @@ import {
   BranchesOutlined,
   LinkOutlined,
   NodeIndexOutlined,
-  PieChartOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
 
@@ -46,7 +45,7 @@ export const routeMetaList = [
   {
     key: 'channel-my-params',
     path: '/channel/my-params',
-    title: '我的参数管理',
+    title: '参数申请管理',
     menuKey: 'channel-my-params',
     parentKey: 'channel-management',
   },
@@ -107,23 +106,23 @@ export const routeMetaList = [
     parentKey: 'callback-management',
   },
   {
-    key: 'callback-my-node',
-    path: '/callback/my-node',
-    title: '我的节点管理',
-    menuKey: 'callback-my-node',
+    key: 'callback-node-management-view',
+    path: '/callback/node-management/view',
+    title: '查看回传节点',
+    menuKey: 'callback-node-management',
     parentKey: 'callback-management',
   },
   {
-    key: 'callback-node-review',
-    path: '/callback/node-review',
-    title: '回传节点审核',
-    menuKey: 'callback-node-review',
+    key: 'callback-strategy-review',
+    path: '/callback/strategy-review',
+    title: '回传策略审核',
+    menuKey: 'callback-strategy-review',
     parentKey: 'callback-management',
   },
   {
     key: 'callback-strategy-management',
     path: '/callback/strategy-management',
-    title: '回传策略管理',
+    title: '策略申请管理',
     menuKey: 'callback-strategy-management',
     parentKey: 'callback-management',
   },
@@ -156,9 +155,30 @@ export const routeMetaList = [
     parentKey: 'delivery-management',
   },
   {
+    key: 'delivery-link-management-view',
+    path: '/delivery/link-management/view',
+    title: '查看投放链接',
+    menuKey: 'delivery-link-management',
+    parentKey: 'delivery-management',
+  },
+  {
     key: 'delivery-my-scene',
     path: '/delivery/my-scene',
     title: '我的投放场景',
+    menuKey: 'delivery-my-scene',
+    parentKey: 'delivery-management',
+  },
+  {
+    key: 'delivery-my-scene-create',
+    path: '/delivery/my-scene/create',
+    title: '新增我的投放场景',
+    menuKey: 'delivery-my-scene',
+    parentKey: 'delivery-management',
+  },
+  {
+    key: 'delivery-my-scene-edit',
+    path: '/delivery/my-scene/edit',
+    title: '编辑我的投放场景',
     menuKey: 'delivery-my-scene',
     parentKey: 'delivery-management',
   },
@@ -181,12 +201,6 @@ export const routeMetaList = [
     title: '银证渠道回传管理',
     menuKey: 'public-data-management',
   },
-  {
-    key: 'report-performance',
-    path: '/report/performance',
-    title: '渠道投放成效管理',
-    menuKey: 'report-performance',
-  },
 ];
 
 export const routeMetaMap = routeMetaList.reduce((accumulator, item) => {
@@ -206,7 +220,7 @@ export const menuItems = [
       },
       {
         key: 'channel-my-params',
-        label: '我的参数管理',
+        label: '投放参数配置',
       },
       {
         key: 'channel-placement-review',
@@ -217,23 +231,19 @@ export const menuItems = [
   {
     key: 'callback-management',
     icon: <NodeIndexOutlined />,
-    label: '回传节点管理',
+    label: '回传策略管理',
     children: [
       {
         key: 'callback-node-management',
         label: '回传节点管理',
       },
       {
-        key: 'callback-my-node',
-        label: '我的节点管理',
-      },
-      {
-        key: 'callback-node-review',
-        label: '回传节点审核',
-      },
-      {
         key: 'callback-strategy-management',
-        label: '回传策略管理',
+        label: '回传策略配置',
+      },
+      {
+        key: 'callback-strategy-review',
+        label: '回传策略审核',
       },
     ],
   },
@@ -244,7 +254,7 @@ export const menuItems = [
     children: [
       {
         key: 'delivery-link-management',
-        label: '投放场景管理',
+        label: '投放场景配置',
       },
       {
         key: 'delivery-my-scene',
@@ -265,11 +275,6 @@ export const menuItems = [
     key: 'public-data-management',
     icon: <ApartmentOutlined />,
     label: '银证渠道回传管理',
-  },
-  {
-    key: 'report-performance',
-    icon: <PieChartOutlined />,
-    label: '渠道投放成效管理',
   },
 ];
 

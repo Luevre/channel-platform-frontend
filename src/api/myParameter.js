@@ -23,3 +23,6 @@ export const archiveMyParameter = (id) =>
 
 export const auditMyParameter = (data) =>
   request.post('/channel/my-params/review/audit', data)
+
+export const getPlacementParamOptions = () =>
+  request.get('/channel/my-params/placement-options')

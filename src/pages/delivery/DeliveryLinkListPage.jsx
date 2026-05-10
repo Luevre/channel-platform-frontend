@@ -45,7 +45,12 @@ export function DeliveryLinkListPage() {
   const columns = [
     {
       title: '链接名称', dataIndex: 'linkName', width: 160,
-      render: (value) => <Button type="link" className="table-action-button">{value}</Button>,
+      render: (value, record) => (
+        <Button type="link" className="table-action-button"
+          onClick={() => navigate(`/delivery/link-management/view?id=${record.id}`)}>
+          {value}
+        </Button>
+      ),
     },
     { title: '投放渠道', dataIndex: 'channel', width: 90 },
     { title: '投放内容', dataIndex: 'content', width: 110 },
