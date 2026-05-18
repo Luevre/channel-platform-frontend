@@ -120,6 +120,13 @@ export const routeMetaList = [
     parentKey: 'callback-management',
   },
   {
+    key: 'callback-strategy-review-detail',
+    path: '/callback/strategy-review/:id',
+    title: '审核回传策略详情',
+    menuKey: 'callback-strategy-review',
+    parentKey: 'callback-management',
+  },
+  {
     key: 'callback-strategy-management',
     path: '/callback/strategy-management',
     title: '策略申请管理',
@@ -186,6 +193,13 @@ export const routeMetaList = [
     key: 'delivery-scene-review',
     path: '/delivery/scene-review',
     title: '投放场景审核',
+    menuKey: 'delivery-scene-review',
+    parentKey: 'delivery-management',
+  },
+  {
+    key: 'delivery-scene-review-detail',
+    path: '/delivery/scene-review/detail',
+    title: '审核投放场景详情',
     menuKey: 'delivery-scene-review',
     parentKey: 'delivery-management',
   },
@@ -280,6 +294,7 @@ export const menuItems = [
 
 export const menuKeyToPath = routeMetaList.reduce((accumulator, item) => {
   if (
+    item.path.includes('/:') ||
     item.path.includes('/create') ||
     item.path.includes('/edit') ||
     item.path.includes('/view') ||
