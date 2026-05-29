@@ -1,8 +1,10 @@
 import { Button, Card, DatePicker, Form, Input, Select, Space, Table, Tag, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { archiveMyDeliveryScene, getMyDeliveryScenePage, submitMyDeliveryScene } from '../../api/myDeliveryScene';
 import { formatDateTime } from '../../utils/format';
+import { exportToExcel } from '../../utils/exportExcel';
 
 const { RangePicker } = DatePicker;
 
@@ -24,6 +26,7 @@ export function MyDeliverySceneListPage() {
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({ current: 1, size: 10 });
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -89,7 +92,10 @@ export function MyDeliverySceneListPage() {
               }}>
               归档
             </Button>
-            <Button type="link" className="table-action-button">数据</Button>
+            <Button type="link" className="table-action-button"
+              onClick={() => window.open('/scene-dashboard.html', '_blank')}>
+              数据
+            </Button>
           </Space>
         );
       },
@@ -115,6 +121,47 @@ export function MyDeliverySceneListPage() {
     form.resetFields();
     setFilters({ linkName: '', channel: '', content: '', promoMode: '', creatorName: '', startTime: '', endTime: '' });
     setPagination((p) => ({ ...p, current: 1 }));
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await getMyDeliveryScenePage({
+        linkName: filters.linkName || undefined,
+        channel: filters.channel || undefined,
+        content: filters.content || undefined,
+        promoMode: filters.promoMode || undefined,
+        creatorName: filters.creatorName || undefined,
+        startTime: filters.startTime || undefined,
+        endTime: filters.endTime || undefined,
+        current: 1,
+        size: 9999,
+      });
+      const allData = res?.data?.records || [];
+      if (!allData.length) { message.warning('暂无数据可导出'); return; }
+      const exportColumns = [
+        { title: '链接名称', dataIndex: 'linkName' },
+        { title: '投放渠道', dataIndex: 'channel' },
+        { title: '投放内容', dataIndex: 'content' },
+        { title: '投放推广模式', dataIndex: 'promoMode' },
+        { title: '短链状态', dataIndex: 'linkStatus' },
+        { title: '提交时间', dataIndex: 'submittedAt' },
+        { title: '审核状态', dataIndex: 'auditResult' },
+        { title: '创建人', dataIndex: 'creatorName' },
+      ];
+      const AUDIT_LABEL = { 0: '待审核', 1: '已通过', 2: '已驳回' };
+      const formatted = allData.map((row) => ({
+        ...row,
+        auditResult: AUDIT_LABEL[row.auditResult] ?? '-',
+        submittedAt: row.submittedAt ? formatDateTime(row.submittedAt) : '',
+      }));
+      exportToExcel(formatted, exportColumns, '我的投放场景');
+      message.success(`已导出 ${allData.length} 条数据`);
+    } catch {
+      message.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -145,9 +192,14 @@ export function MyDeliverySceneListPage() {
             <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
-          <Button type="primary" onClick={() => navigate('/delivery/my-scene/create')}>
-            + 新增投放场景
-          </Button>
+          <Space>
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport}>
+              导出 Excel
+            </Button>
+            <Button type="primary" onClick={() => navigate('/delivery/my-scene/create')}>
+              + 新增投放场景
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
       <Table

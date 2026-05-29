@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>投放场景数据看板</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+      background: #f0f4fb;
+      color: #1f2937;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1a56a0 0%, #1e6fd4 100%);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 12px rgba(26, 86, 160, 0.3);
+    }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .header-logo {
+      width: 36px; height: 36px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; color: #fff; font-weight: 700;
+    }
+    .header-title { color: #fff; font-size: 18px; font-weight: 600; }
+    .header-sub { color: rgba(255,255,255,0.65); font-size: 13px; margin-top: 2px; }
+    .header-badge {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 12px;
+    }
+
+    /* Content */
+    .content { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+    /* Period selector */
+    .period-bar {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 24px;
+    }
+    .period-label { font-size: 13px; color: #6b7280; }
+    .period-tabs { display: flex; gap: 6px; }
+    .period-tab {
+      padding: 6px 16px; border-radius: 8px; font-size: 13px; cursor: pointer;
+      border: 1px solid #d5dff0; background: #fff; color: #374151;
+      transition: all 0.15s;
+    }
+    .period-tab.active {
+      background: #1a56a0; color: #fff; border-color: #1a56a0;
+    }
+    .data-date { margin-left: auto; font-size: 12px; color: #9ca3af; }
+
+    /* KPI Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      border: 1px solid #eef2f8;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent, #1a56a0);
+      border-radius: 14px 14px 0 0;
+    }
+    .kpi-label { font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
+    .kpi-value { font-size: 28px; font-weight: 700; color: #1f2937; line-height: 1; }
+    .kpi-value span { font-size: 14px; font-weight: 400; color: #9ca3af; margin-left: 4px; }
+    .kpi-trend {
+      display: flex; align-items: center; gap: 4px;
+      margin-top: 10px; font-size: 12px;
+    }
+    .kpi-trend.up { color: #10b981; }
+    .kpi-trend.down { color: #ef4444; }
+    .kpi-icon {
+      position: absolute; right: 20px; bottom: 16px;
+      font-size: 36px; opacity: 0.07; font-weight: 700; color: #1a56a0;
+    }
+
+    /* Chart grid */
+    .chart-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .chart-grid-3 {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+    }
+    .chart-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 20px 24px;
+      border: 1px solid #eef2f8;
+      box-shadow: 0 2px 8px rgba(15,23,42,0.06);
+    }
+    .chart-header {
+      display: flex; justify-content: space-between;
+      align-items: flex-start; margin-bottom: 18px;
+    }
+    .chart-title { font-size: 14px; font-weight: 600; color: #1f2937; }
+    .chart-sub { font-size: 12px; color: #9ca3af; margin-top: 3px; }
+    .chart-legend { display: flex; gap: 16px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .chart-wrap { position: relative; height: 220px; }
+    .chart-wrap-sm { position: relative; height: 180px; }
+
+    /* Channel rank */
+    .rank-list { display: flex; flex-direction: column; gap: 14px; }
+    .rank-item { display: flex; align-items: center; gap: 12px; }
+    .rank-no {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .rank-no.r1 { background: #1a56a0; color: #fff; }
+    .rank-no.r2 { background: #e0eaf8; color: #1a56a0; }
+    .rank-no.r3 { background: #f3f6fb; color: #6b7280; }
+    .rank-bar-wrap { flex: 1; }
+    .rank-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+    .rank-bar-name { color: #374151; font-weight: 500; }
+    .rank-bar-val { color: #6b7280; }
+    .rank-bar-bg { height: 6px; background: #f0f4fb; border-radius: 4px; overflow: hidden; }
+    .rank-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #1a56a0, #4b8fd4); transition: width 0.6s; }
+
+    /* Week table */
+    .week-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .week-table th {
+      text-align: left; padding: 8px 12px;
+      background: #f8fafd; color: #6b7280; font-weight: 500;
+      border-bottom: 1px solid #eef2f8;
+    }
+    .week-table td {
+      padding: 10px 12px; border-bottom: 1px solid #f3f6fb;
+      color: #374151;
+    }
+    .week-table tr:hover td { background: #f8fafd; }
+    .badge {
+      display: inline-block; padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 500;
+    }
+    .badge-blue { background: #eff6ff; color: #1a56a0; }
+    .badge-green { background: #f0fdf4; color: #16a34a; }
+    .badge-gray { background: #f9fafb; color: #9ca3af; }
+    .up-text { color: #10b981; }
+    .down-text { color: #ef4444; }
+
+    @media (max-width: 900px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .chart-grid, .chart-grid-3 { grid-template-columns: 1fr; }
+      .content { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-logo">投</div>
+    <div>
+      <div class="header-title">投放场景数据看板</div>
+      <div class="header-sub">渠道投放中台 · 数据分析</div>
+    </div>
+  </div>
+  <div class="header-badge">数据截至 2026-05-15</div>
+</div>
+
+<div class="content">
+
+  <!-- Period bar -->
+  <div class="period-bar">
+    <span class="period-label">周期</span>
+    <div class="period-tabs">
+      <div class="period-tab">3.3-3.9</div>
+      <div class="period-tab">3.20-3.26</div>
+      <div class="period-tab">3.27-4.2</div>
+      <div class="period-tab">4.3-4.9</div>
+      <div class="period-tab">4.10-4.16</div>
+      <div class="period-tab">4.17-4.23</div>
+      <div class="period-tab">5.1-5.7</div>
+      <div class="period-tab active">5.8-5.14</div>
+    </div>
+    <div class="data-date">最新数据：周数据（5.8-5.14）</div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card" style="--accent:#1a56a0">
+      <div class="kpi-label">本周注册用户数</div>
+      <div class="kpi-value">10,154<span>人</span></div>
+      <div class="kpi-trend up">↑ 较上周 +10.1%</div>
+      <div class="kpi-icon">注</div>
+    </div>
+    <div class="kpi-card" style="--accent:#3b82f6">
+      <div class="kpi-label">本周开户数</div>
+      <div class="kpi-value">4,714<span>人</span></div>
+      <div class="kpi-trend up">↑ 较上周 +58.7%</div>
+      <div class="kpi-icon">户</div>
+    </div>
+    <div class="kpi-card" style="--accent:#06b6d4">
+      <div class="kpi-label">累计注册总量</div>
+      <div class="kpi-value">627,210<span>人</span></div>
+      <div class="kpi-trend up">↑ 本周新增 10,154</div>
+      <div class="kpi-icon">计</div>
+    </div>
+    <div class="kpi-card" style="--accent:#6366f1">
+      <div class="kpi-label">注册-开户转化率</div>
+      <div class="kpi-value">46.4<span>%</span></div>
+      <div class="kpi-trend up">↑ 较上周 +13.2pp</div>
+      <div class="kpi-icon">率</div>
+    </div>
+  </div>
+
+  <!-- 趋势 + 本周对比 -->
+  <div class="chart-grid">
+    <!-- 周注册趋势 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">周注册用户趋势</div>
+          <div class="chart-sub">各渠道过去 8 周新增注册用户数</div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#1a56a0"></div>同花顺</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>京东金融</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#a5b4fc"></div>腾讯自选股</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+    </div>
+
+    <!-- 本周渠道对比 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">本周各渠道对比</div>
+          <div class="chart-sub">注册用户数 vs 开户数（5.8-5.14）</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- 累计趋势 + 渠道排名 -->
+  <div class="chart-grid-3">
+    <!-- 累计注册趋势 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">累计注册量趋势</div>
+          <div class="chart-sub">各渠道存量用户增长曲线</div>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#1a56a0"></div>同花顺</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div>京东金融</div>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="cumulChart"></canvas></div>
+    </div>
+
+    <!-- 渠道排名 -->
+    <div class="chart-card">
+      <div class="chart-header">
+        <div>
+          <div class="chart-title">渠道注册排名</div>
+          <div class="chart-sub">本周注册量占比</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px"><canvas id="pieChart" style="max-height:150px"></canvas></div>
+      <div class="rank-list">
+        <div class="rank-item">
+          <div class="rank-no r1">1</div>
+          <div class="rank-bar-wrap">
+            <div class="rank-bar-label">
+              <span class="rank-bar-name">同花顺</span>
+              <span class="rank-bar-val">7,332 人（72.2%）</span>
+            </div>
+            <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:72.2%"></div></div>
+          </div>
+        </div>
+        <div class="rank-item">
+          <div class="rank-no r2">2</div>
+          <div class="rank-bar-wrap">
+            <div class="rank-bar-label">
+              <span class="rank-bar-name">京东金融</span>
+              <span class="rank-bar-val">2,822 人（27.8%）</span>
+            </div>
+            <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:27.8%; background:linear-gradient(90deg,#60a5fa,#93c5fd)"></div></div>
+          </div>
+        </div>
+        <div class="rank-item">
+          <div class="rank-no r3">3</div>
+          <div class="rank-bar-wrap">
+            <div class="rank-bar-label">
+              <span class="rank-bar-name">腾讯自选股</span>
+              <span class="rank-bar-val">0 人（0%）</span>
+            </div>
+            <div class="rank-bar-bg"><div class="rank-bar-fill" style="width:0.5%; background:#d1d5db"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 周数据明细表 -->
+  <div class="chart-card" style="margin-top:16px">
+    <div class="chart-header">
+      <div>
+        <div class="chart-title">周数据明细</div>
+        <div class="chart-sub">8 周各渠道注册 / 开户数据汇总</div>
+      </div>
+    </div>
+    <table class="week-table">
+      <thead>
+        <tr>
+          <th>周期</th>
+          <th>渠道</th>
+          <th>本周注册</th>
+          <th>本周开户</th>
+          <th>转化率</th>
+          <th>注册环比</th>
+          <th>累计注册</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>5.8-5.14</td><td><span class="badge badge-blue">同花顺</span></td><td>7,332</td><td>3,412</td><td>46.5%</td><td class="up-text">↑ 43.5%</td><td>510,181</td></tr>
+        <tr><td>5.8-5.14</td><td><span class="badge badge-blue">京东金融</span></td><td>2,822</td><td>1,006</td><td>35.6%</td><td class="up-text">↑ 3.7%</td><td>116,269</td></tr>
+        <tr><td>5.8-5.14</td><td><span class="badge badge-gray">腾讯自选股</span></td><td>0</td><td>296</td><td>-</td><td>N/A</td><td>760</td></tr>
+        <tr><td>5.1-5.7</td><td><span class="badge badge-blue">同花顺</span></td><td>5,116</td><td>1,344</td><td>26.3%</td><td class="down-text">↓ 35.0%</td><td>502,812</td></tr>
+        <tr><td>5.1-5.7</td><td><span class="badge badge-blue">京东金融</span></td><td>2,724</td><td>601</td><td>22.1%</td><td class="up-text">↑ 7.1%</td><td>113,465</td></tr>
+        <tr><td>4.17-4.23</td><td><span class="badge badge-blue">同花顺</span></td><td>7,873</td><td>2,291</td><td>29.1%</td><td class="up-text">↑ 1.4%</td><td>491,534</td></tr>
+        <tr><td>4.17-4.23</td><td><span class="badge badge-blue">京东金融</span></td><td>2,545</td><td>475</td><td>18.7%</td><td class="down-text">↓ 8.4%</td><td>108,644</td></tr>
+        <tr><td>4.10-4.16</td><td><span class="badge badge-blue">同花顺</span></td><td>7,766</td><td>2,024</td><td>26.1%</td><td class="up-text">↑ 35.8%</td><td>483,680</td></tr>
+        <tr><td>4.10-4.16</td><td><span class="badge badge-blue">京东金融</span></td><td>2,777</td><td>505</td><td>18.2%</td><td class="up-text">↑ 31.9%</td><td>106,111</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+const WEEKS = ['3.3-3.9','3.20-3.26','3.27-4.2','4.3-4.9','4.10-4.16','4.17-4.23','5.1-5.7','5.8-5.14'];
+
+const data = {
+  同花顺:    { reg:[9562,7442,7186,5720,7766,7873,5116,7332], open:[3380,2750,2034,1379,2024,2291,1344,3412], cum:[439458,463068,470234,475931,483680,491534,502812,510181] },
+  京东金融:  { reg:[4925,2967,2774,2105,2777,2545,2724,2822], open:[1074, 665, 532, 417, 505, 475, 601,1006], cum:[ 89686, 98482,101248,103340,106111,108644,113465,116269] },
+  腾讯自选股:{ reg:[  14,   9,   5,  11,  10,   7,   0,   0], open:[ 533, 288, 196, 154, 159, 219, 126, 296], cum:[   691,   727,   732,   743,   753,   760,   760,   760] },
+};
+
+const C1 = '#1a56a0', C2 = '#60a5fa', C3 = '#a5b4fc';
+const gridColor = 'rgba(0,0,0,0.05)';
+const baseOpts = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { mode: 'index', intersect: false } },
+  scales: {
+    x: { grid: { color: gridColor }, ticks: { font: { size: 11 }, color: '#9ca3af' } },
+    y: { grid: { color: gridColor }, ticks: { font: { size: 11 }, color: '#9ca3af' } },
+  },
+};
+
+// 1. 周注册趋势
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: WEEKS,
+    datasets: [
+      { label:'同花顺', data: data.同花顺.reg, borderColor:C1, backgroundColor:'rgba(26,86,160,0.08)', fill:true, tension:0.4, pointRadius:4, pointHoverRadius:6, borderWidth:2 },
+      { label:'京东金融', data: data.京东金融.reg, borderColor:C2, backgroundColor:'rgba(96,165,250,0.06)', fill:true, tension:0.4, pointRadius:4, pointHoverRadius:6, borderWidth:2 },
+      { label:'腾讯自选股', data: data.腾讯自选股.reg, borderColor:C3, backgroundColor:'rgba(165,180,252,0.06)', fill:true, tension:0.4, pointRadius:4, pointHoverRadius:6, borderWidth:2 },
+    ],
+  },
+  options: baseOpts,
+});
+
+// 2. 本周渠道对比柱状图
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: ['同花顺','京东金融','腾讯自选股'],
+    datasets: [
+      { label:'注册用户数', data:[7332,2822,0], backgroundColor:[C1,C2,C3], borderRadius:6 },
+      { label:'开户数', data:[3412,1006,296], backgroundColor:['rgba(26,86,160,0.35)','rgba(96,165,250,0.35)','rgba(165,180,252,0.35)'], borderRadius:6 },
+    ],
+  },
+  options: {
+    ...baseOpts,
+    plugins: {
+      ...baseOpts.plugins,
+      legend: { display:true, position:'bottom', labels:{ font:{ size:11 }, color:'#6b7280', boxWidth:12, padding:12 } },
+    },
+  },
+});
+
+// 3. 累计注册趋势
+new Chart(document.getElementById('cumulChart'), {
+  type: 'line',
+  data: {
+    labels: WEEKS,
+    datasets: [
+      { label:'同花顺', data: data.同花顺.cum, borderColor:C1, backgroundColor:'rgba(26,86,160,0.1)', fill:true, tension:0.3, pointRadius:3, borderWidth:2 },
+      { label:'京东金融', data: data.京东金融.cum, borderColor:C2, backgroundColor:'rgba(96,165,250,0.07)', fill:true, tension:0.3, pointRadius:3, borderWidth:2 },
+    ],
+  },
+  options: baseOpts,
+});
+
+// 4. 饼图
+new Chart(document.getElementById('pieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['同花顺','京东金融','腾讯自选股'],
+    datasets: [{ data:[7332,2822,0.5], backgroundColor:[C1,C2,'#e5e7eb'], borderWidth:0, hoverOffset:6 }],
+  },
+  options: {
+    responsive:true, maintainAspectRatio:false,
+    cutout:'68%',
+    plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ` ${ctx.label}: ${ctx.raw.toLocaleString()} 人` } } },
+  },
+});
+
+// Period tab click
+document.querySelectorAll('.period-tab').forEach((el, i) => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

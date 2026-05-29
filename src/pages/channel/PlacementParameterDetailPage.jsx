@@ -43,7 +43,18 @@ export function PlacementParameterDetailPage() {
           </Button>
         </Descriptions.Item>
         <Descriptions.Item label="参数申请通道">
-          <Button size="small">点我申请</Button>
+          <Button
+            size="small"
+            onClick={() =>
+              navigate(
+                `/channel/my-params/create?parameterName=${encodeURIComponent(
+                  `${data.paramName} | ${data.paramKey}`
+                )}`
+              )
+            }
+          >
+            点我申请
+          </Button>
         </Descriptions.Item>
         <Descriptions.Item label="参数字典表">
           <Button

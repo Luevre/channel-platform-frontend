@@ -1,8 +1,10 @@
-import { Button, Card, Form, Input, Select, Space, Table, Tooltip } from 'antd';
+import { Button, Card, Form, Input, Select, Space, Table, Tooltip, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPlacementParamPage } from '../../api/placementParam';
 import { formatDateTime } from '../../utils/format';
+import { exportToExcel } from '../../utils/exportExcel';
 
 /** 根据可视区高度动态计算每页条数 */
 function useAutoPageSize(cardRef, defaultSize = 10) {
@@ -51,6 +53,7 @@ export function PlacementParameterListPage() {
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const categoryOptions = [
     { label: '场景参数', value: '场景参数' },
@@ -175,6 +178,45 @@ export function PlacementParameterListPage() {
     setCurrentPage(page.current);
   };
 
+  /** 导出全部数据（按当前筛选条件拉全量，不分页） */
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await getPlacementParamPage({
+        paramName: filters.paramName || undefined,
+        paramKey: filters.paramKey || undefined,
+        category: filters.category || undefined,
+        current: 1,
+        size: 9999,
+      });
+      const allData = res?.data?.records || [];
+      if (!allData.length) {
+        message.warning('暂无数据可导出');
+        return;
+      }
+      // 导出列（排除"操作"列）
+      const exportColumns = [
+        { title: '参数名_中文', dataIndex: 'paramName' },
+        { title: '参数名_英文', dataIndex: 'paramKey' },
+        { title: '参数分类', dataIndex: 'category' },
+        { title: '参数应用', dataIndex: 'paramUsage' },
+        { title: '参数管理员', dataIndex: 'manager' },
+        { title: '最近操作时间', dataIndex: 'updatedAt' },
+      ];
+      // 格式化时间字段
+      const formatted = allData.map((row) => ({
+        ...row,
+        updatedAt: row.updatedAt ? formatDateTime(row.updatedAt) : '',
+      }));
+      exportToExcel(formatted, exportColumns, '投放参数管理');
+      message.success(`已导出 ${allData.length} 条数据`);
+    } catch {
+      message.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card bordered={false} className="page-card" ref={cardRef}>
       <div className="page-toolbar">
@@ -199,9 +241,18 @@ export function PlacementParameterListPage() {
             <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
-          <Button type="primary" onClick={() => navigate('/channel/placement-params/create')}>
-            + 新增参数
-          </Button>
+          <Space>
+            <Button
+              icon={<DownloadOutlined />}
+              loading={exporting}
+              onClick={handleExport}
+            >
+              导出 Excel
+            </Button>
+            <Button type="primary" onClick={() => navigate('/channel/placement-params/create')}>
+              + 新增参数
+            </Button>
+          </Space>
         </div>
       </div>
       <Table

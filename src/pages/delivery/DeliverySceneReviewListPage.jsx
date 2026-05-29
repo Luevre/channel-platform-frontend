@@ -1,5 +1,6 @@
 import { Button, Card, DatePicker, Form, Input, Select, Space, Table, Tag } from 'antd';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getMyDeliveryScenePage } from '../../api/myDeliveryScene';
 import { formatDateTime } from '../../utils/format';
 
@@ -14,6 +15,7 @@ const AUDIT_RESULT_MAP = {
 };
 
 export function DeliverySceneReviewListPage() {
+  const navigate = useNavigate();
   const [form] = Form.useForm();
   const [dataSource, setDataSource] = useState([]);
   const [total, setTotal] = useState(0);
@@ -75,7 +77,11 @@ export function DeliverySceneReviewListPage() {
       width: 80,
       fixed: 'right',
       render: (_, record) => (
-        <Button type="link" className="table-action-button">
+        <Button
+          type="link"
+          className="table-action-button"
+          onClick={() => navigate(`/delivery/scene-review/detail?id=${record.id}`)}
+        >
           {record.auditResult === 0 ? '审核' : '查阅'}
         </Button>
       ),

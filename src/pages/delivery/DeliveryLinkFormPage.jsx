@@ -119,6 +119,7 @@ export function DeliveryLinkFormPage({ mode }) {
         form.setFieldsValue({
           linkName: record.linkName,
           channel: record.channel,
+          channelCode: record.channelCode,
           content: record.content,
           promoMode: record.promoMode,
           originUrl: record.originUrl,
@@ -143,6 +144,7 @@ export function DeliveryLinkFormPage({ mode }) {
     const data = {
       linkName: values.linkName?.trim(),
       channel: values.channel,
+      channelCode: values.channelCode?.trim(),
       content: values.content,
       promoMode: values.promoMode,
       originUrl: values.originUrl?.trim(),
@@ -357,6 +359,11 @@ export function DeliveryLinkFormPage({ mode }) {
                 </>
               )}
             />
+          </Form.Item>
+
+          <Form.Item label="渠道编码" name="channelCode" rules={[{ required: true, message: '请输入渠道编码' }]}
+            extra="渠道的英文标识，如 douyin、jingdong、kuaishou、txzxg">
+            <Input placeholder="请输入渠道编码，如 douyin" />
           </Form.Item>
 
           <Form.Item label="投放内容" name="content" rules={[{ required: true, message: '请选择投放内容' }]}>

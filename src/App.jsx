@@ -5,6 +5,8 @@ import { CallbackNodeDetailPage } from './pages/callback/CallbackNodeDetailPage'
 import { CallbackNodeListPage } from './pages/callback/CallbackNodeListPage';
 import { CallbackStrategyFormPage } from './pages/callback/CallbackStrategyFormPage';
 import { CallbackStrategyListPage } from './pages/callback/CallbackStrategyListPage';
+import { StrategyReviewListPage } from './pages/callback/StrategyReviewListPage';
+import { StrategyReviewDetailPage } from './pages/callback/StrategyReviewDetailPage';
 import { MyParameterFormPage } from './pages/channel/MyParameterFormPage';
 import { MyParameterListPage } from './pages/channel/MyParameterListPage';
 import { MyParameterDetailPage } from './pages/channel/MyParameterDetailPage';
@@ -20,6 +22,7 @@ import { DeliveryLinkListPage } from './pages/delivery/DeliveryLinkListPage';
 import { MyDeliverySceneListPage } from './pages/delivery/MyDeliverySceneListPage';
 import { MyDeliverySceneFormPage } from './pages/delivery/MyDeliverySceneFormPage';
 import { DeliverySceneReviewListPage } from './pages/delivery/DeliverySceneReviewListPage';
+import { DeliverySceneReviewDetailPage } from './pages/delivery/DeliverySceneReviewDetailPage';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { routeMetaList } from './router/routeMeta.jsx';
 // ↓ 新增这两行
@@ -58,10 +61,8 @@ export default function App() {
         { path: 'callback/node-management/create', element: <CallbackNodeFormPage mode="create" /> },
         { path: 'callback/node-management/edit', element: <CallbackNodeFormPage mode="edit" /> },
         { path: 'callback/node-management/view', element: <CallbackNodeDetailPage /> },
-        {
-          path: 'callback/strategy-review',
-          element: createPlaceholder('回传策略审核', '原型绘制完成后补充页面内容。'),
-        },
+        { path: 'callback/strategy-review', element: <StrategyReviewListPage /> },
+        { path: 'callback/strategy-review/:id', element: <StrategyReviewDetailPage /> },
         { path: 'callback/strategy-management', element: <CallbackStrategyListPage /> },
         { path: 'callback/strategy-management/create', element: <CallbackStrategyFormPage /> },
         { path: 'delivery/link-management', element: <DeliveryLinkListPage /> },
@@ -72,6 +73,7 @@ export default function App() {
         { path: 'delivery/my-scene/create', element: <MyDeliverySceneFormPage mode="create" /> },
         { path: 'delivery/my-scene/edit', element: <MyDeliverySceneFormPage mode="edit" /> },
         { path: 'delivery/scene-review', element: <DeliverySceneReviewListPage /> },
+        { path: 'delivery/scene-review/detail', element: <DeliverySceneReviewDetailPage /> },
         {
           path: 'delivery/deeplink',
           element: createPlaceholder('deeplink管理', '原型中暂未给出 deeplink 页面，先保留菜单入口。'),

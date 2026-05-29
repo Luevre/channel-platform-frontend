@@ -1,8 +1,10 @@
 import { Button, Card, Form, Input, Select, Space, Table, Tag, Tooltip, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { archiveMyParameter, getMyParameterPage, submitMyParameter } from '../../api/myParameter';
 import { formatDateTime } from '../../utils/format';
+import { exportToExcel } from '../../utils/exportExcel';
 
 // 提交状态映射
 const STATUS_MAP = {
@@ -31,6 +33,7 @@ export function MyParameterListPage() {
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({ current: 1, size: 10 });
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const parameterOptions = [
     { label: '全部', value: '' },
@@ -77,7 +80,17 @@ export function MyParameterListPage() {
         </Button>
       ),
     },
-    { title: '参数值', dataIndex: 'value', width: 160 },
+    {
+      title: '参数值',
+      dataIndex: 'value',
+      width: 160,
+      render: (val, record) => {
+        if (record.applyType === 'new' && !val) {
+          return <Tag color="processing">申请中</Tag>;
+        }
+        return val || '-';
+      },
+    },
     { title: '参数名', dataIndex: 'parameterName', width: 210 },
     { title: '参数使用说明', dataIndex: 'usage', width: 280 },
     {
@@ -184,6 +197,43 @@ export function MyParameterListPage() {
     }));
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await getMyParameterPage({
+        scene: filters.scene || undefined,
+        value: filters.value || undefined,
+        parameterName: filters.parameterName || undefined,
+        auditResult: filters.auditResult != null ? filters.auditResult : undefined,
+        current: 1,
+        size: 9999,
+      });
+      const allData = res?.data?.records || [];
+      if (!allData.length) { message.warning('暂无数据可导出'); return; }
+      const exportColumns = [
+        { title: '参数应用场景', dataIndex: 'scene' },
+        { title: '参数值', dataIndex: 'value' },
+        { title: '参数名', dataIndex: 'parameterName' },
+        { title: '参数使用说明', dataIndex: 'usage' },
+        { title: '审核状态', dataIndex: 'auditResult' },
+        { title: '申请人', dataIndex: 'applicant' },
+        { title: '提交时间', dataIndex: 'submittedAt' },
+      ];
+      const AUDIT_LABEL = { 0: '待审核', 1: '已通过', 2: '已驳回' };
+      const formatted = allData.map((row) => ({
+        ...row,
+        auditResult: AUDIT_LABEL[row.auditResult] ?? '待审核',
+        submittedAt: row.submittedAt ? formatDateTime(row.submittedAt) : '',
+      }));
+      exportToExcel(formatted, exportColumns, '我的参数');
+      message.success(`已导出 ${allData.length} 条数据`);
+    } catch {
+      message.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card bordered={false} className="page-card">
       <div className="page-toolbar">
@@ -210,9 +260,14 @@ export function MyParameterListPage() {
             <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
-          <Button type="primary" onClick={() => navigate('/channel/my-params/create')}>
-            + 添加我的参数
-          </Button>
+          <Space>
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport}>
+              导出 Excel
+            </Button>
+            <Button type="primary" onClick={() => navigate('/channel/my-params/create')}>
+              + 添加我的参数
+            </Button>
+          </Space>
         </div>
       </div>
       <Table

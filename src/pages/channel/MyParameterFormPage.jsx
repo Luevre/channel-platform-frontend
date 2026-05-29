@@ -15,17 +15,20 @@ export function MyParameterFormPage({ mode }) {
   const [paramOptions, setParamOptions] = useState([]);
   const [applyType, setApplyType] = useState('new');
 
-  // 加载投放参数选项
+  // 加载投放参数选项，加载完后若 URL 带了 parameterName 则预填
   useEffect(() => {
+    const presetName = searchParams.get('parameterName');
     getPlacementParamOptions()
       .then((res) => {
         const list = res?.data || [];
-        setParamOptions(
-          list.map((p) => ({
-            label: `${p.paramName} | ${p.paramKey}`,
-            value: `${p.paramName} | ${p.paramKey}`,
-          }))
-        );
+        const options = list.map((p) => ({
+          label: `${p.paramName} | ${p.paramKey}`,
+          value: `${p.paramName} | ${p.paramKey}`,
+        }));
+        setParamOptions(options);
+        if (presetName) {
+          form.setFieldsValue({ parameterName: presetName });
+        }
       })
       .catch((err) => { console.error('加载投放参数选项失败:', err); });
   }, []);
@@ -149,17 +152,19 @@ export function MyParameterFormPage({ mode }) {
           />
         </Form.Item>
 
-        <Form.Item
-          label="参数值"
-          name="value"
-          rules={[{ required: true, message: '请输入参数值' }]}
-        >
-          <Input
-            placeholder={getValuePlaceHolder()}
-            maxLength={512}
-            disabled={fetching}
-          />
-        </Form.Item>
+        {applyType === 'existing' ? (
+          <Form.Item
+            label="参数值"
+            name="value"
+            rules={[{ required: true, message: '请输入参数值' }]}
+          >
+            <Input placeholder="请输入参数值" maxLength={512} disabled={fetching} />
+          </Form.Item>
+        ) : (
+          <Form.Item label="参数值">
+            <Input disabled placeholder="新参数申请无需填写参数值，由管理员审批后分配" />
+          </Form.Item>
+        )}
 
         <div className="form-footer">
           <Space>

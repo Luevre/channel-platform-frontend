@@ -23,3 +23,21 @@ export const archiveConvStrategy = (id) =>
 /** 删除 */
 export const deleteConvStrategy = (id) =>
   request.delete(`/channel/conv-strategies/${id}`)
+
+// ========== 审核接口 ==========
+
+/** 待审核列表 */
+export const getStrategyReviewList = (params) =>
+  request.get('/channel/conv-strategies/review/list', { params })
+
+/** 审核详情 */
+export const getStrategyReviewDetail = (id) =>
+  request.get(`/channel/conv-strategies/review/${id}`)
+
+/** 审核操作（通过/驳回） */
+export const auditStrategy = (id, data) => {
+  if (data.auditResult === 1) {
+    return request.post(`/channel/conv-strategies/review/${id}/pass`)
+  }
+  return request.post(`/channel/conv-strategies/review/${id}/reject`, data)
+}

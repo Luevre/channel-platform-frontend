@@ -32,17 +32,47 @@ body {
   overflow: auto;
   background: #1a56a0 !important;
   box-shadow: 6px 0 24px rgba(10, 37, 72, 0.18);
+  transition: width 0.2s cubic-bezier(0.2, 0, 0, 1) !important;
 }
 
 .app-logo {
-  height: 72px;
+  height: 68px;
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  justify-content: space-between;
+  padding: 0 12px 0 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.app-logo-text {
   color: #ffffff;
-  font-size: 22px;
+  font-size: 17px;
   font-weight: 700;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  flex: 1;
+  min-width: 0;
+}
+
+.collapse-toggle-btn {
+  color: rgba(255, 255, 255, 0.75) !important;
+  font-size: 16px;
+  flex-shrink: 0;
+  border-radius: 6px !important;
+}
+
+.collapse-toggle-btn:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* 折叠态：logo 区居中显示按钮 */
+.ant-layout-sider-collapsed .app-logo {
+  justify-content: center;
+  padding: 0;
 }
 
 .app-menu {
@@ -60,6 +90,25 @@ body {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
+/* 展开的子菜单背景 — 蓝色而非默认的黑色 */
+.app-menu .ant-menu-sub.ant-menu-inline {
+  background: rgba(0, 0, 0, 0.18) !important;
+}
+
+/* 折叠后弹出的子菜单气泡 */
+.ant-menu-submenu-popup.ant-menu-dark .ant-menu,
+.ant-menu-submenu-popup.ant-menu-dark {
+  background: #154695 !important;
+}
+
+.ant-menu-submenu-popup.ant-menu-dark .ant-menu-item:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.ant-menu-submenu-popup.ant-menu-dark .ant-menu-item-selected {
+  background: rgba(255, 255, 255, 0.16) !important;
+}
+
 .app-main {
   margin-left: 248px;
   height: 100vh;
@@ -67,46 +116,82 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: margin-left 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.app-main.sider-collapsed {
+  margin-left: 64px;
 }
 
 .app-header {
   height: auto;
-  padding: 16px 20px 0;
-  background: #f3f6fb;
+  padding: 0 24px;
+  background: #ffffff;
+  border-bottom: 1px solid #e8edf5;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
   flex-shrink: 0;
+  z-index: 10;
 }
 
 .app-tabs .ant-tabs-nav {
   margin: 0;
+  padding: 12px 0 8px;
+}
+
+.app-tabs .ant-tabs-nav::before {
+  border-bottom: none !important;
 }
 
 .app-tabs .ant-tabs-nav-list {
   display: flex !important;
+  gap: 6px;
 }
 
 .app-tabs .ant-tabs-tab {
-  width: 160px;
+  width: 154px;
   min-width: 0;
   justify-content: center;
-  border-radius: 10px 10px 0 0 !important;
+  border-radius: 2px !important;
+  border-color: #e2e8f4 !important;
+  background: #eef2f9 !important;
+  transition: background 0.15s, box-shadow 0.15s;
+  margin: 0 !important;
+}
+
+.app-tabs .ant-tabs-tab.ant-tabs-tab-active {
+  background: #ffffff !important;
+  border-color: #1a56a0 !important;
+  border-bottom: 2px solid #1a56a0 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
 }
 
 .app-tabs .ant-tabs-tab .ant-tabs-tab-btn {
-  max-width: 120px;
+  max-width: 116px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.app-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #1a56a0 !important;
+  font-weight: 600;
 }
 
 .app-tabs .ant-tabs-nav-add {
   display: none !important;
 }
 
+/* 隐藏 tabs 内容区域的默认外框，让 Outlet 直接渲染 */
+.app-tabs > .ant-tabs-content-holder {
+  display: none;
+}
+
 .app-content {
-  padding: 20px;
+  padding: 22px 24px;
   flex: 1;
   min-height: 0;
   overflow: auto;
+  background: #f3f6fb;
 }
 
 .mobile-topbar {
@@ -133,8 +218,9 @@ body {
 
 .page-card {
   height: 100%;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  border-radius: 0;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.07), 0 1px 3px rgba(15, 23, 42, 0.04);
+  border: 1px solid #eef2f8 !important;
   display: flex;
   flex-direction: column;
 }
@@ -155,27 +241,34 @@ body {
 .page-toolbar {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   gap: 16px;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
+  background: #ffffff;
+  border-radius: 0;
+  padding: 16px 20px;
+  box-shadow: 0 1px 6px rgba(15, 23, 42, 0.05);
+  border: 1px solid #eef2f8;
 }
 
 .toolbar-actions {
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
   flex-shrink: 0;
+  padding-top: 2px;
 }
 
 .filter-form {
   display: flex;
-  gap: 16px;
-  row-gap: 16px;
+  gap: 12px;
+  row-gap: 12px;
   flex-wrap: wrap;
   margin-bottom: 0;
 }
 
 .filter-form.filter-form-stacked {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .filter-form .ant-form-item {
@@ -185,12 +278,12 @@ body {
 .filter-form .ant-input,
 .filter-form .ant-select-selector,
 .filter-form .ant-picker {
-  min-width: 170px;
+  min-width: 160px;
 }
 
 .filter-actions-inline .ant-form-item-control-input-content {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -228,6 +321,19 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 斑马纹：奇偶行灰白交替 */
+.page-card .ant-table-tbody > tr:nth-child(odd) > td {
+  background: #f7f9fc;
+}
+
+.page-card .ant-table-tbody > tr:nth-child(even) > td {
+  background: #ffffff;
+}
+
+.page-card .ant-table-tbody > tr:hover > td {
+  background: #e8f0fb !important;
 }
 
 /* 参数应用列：允许自动换行，显示全部内容 */
@@ -410,7 +516,7 @@ body {
 
   .page-card {
     height: 100%;
-    border-radius: 12px;
+    border-radius: 0;
   }
 
   .page-toolbar,

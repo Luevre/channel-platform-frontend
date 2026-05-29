@@ -1,8 +1,10 @@
-import { Button, Card, DatePicker, Form, Input, Select, Space, Table } from 'antd';
+import { Button, Card, DatePicker, Form, Input, Select, Space, Table, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { archiveDeliveryLink, getDeliveryLinkPage } from '../../api/deliveryLink';
 import { formatDateTime } from '../../utils/format';
+import { exportToExcel } from '../../utils/exportExcel';
 
 const { RangePicker } = DatePicker;
 
@@ -18,6 +20,7 @@ export function DeliveryLinkListPage() {
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({ current: 1, size: 10 });
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -98,6 +101,46 @@ export function DeliveryLinkListPage() {
     setPagination((p) => ({ ...p, current: 1 }));
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await getDeliveryLinkPage({
+        linkName: filters.linkName || undefined,
+        channel: filters.channel || undefined,
+        content: filters.content || undefined,
+        promoMode: filters.promoMode || undefined,
+        creatorName: filters.creatorName || undefined,
+        startTime: filters.startTime || undefined,
+        endTime: filters.endTime || undefined,
+        current: 1,
+        size: 9999,
+      });
+      const allData = res?.data?.records || [];
+      if (!allData.length) { message.warning('暂无数据可导出'); return; }
+      const exportColumns = [
+        { title: '链接名称', dataIndex: 'linkName' },
+        { title: '投放渠道', dataIndex: 'channel' },
+        { title: '投放内容', dataIndex: 'content' },
+        { title: '投放推广模式', dataIndex: 'promoMode' },
+        { title: '短链状态', dataIndex: 'linkStatus' },
+        { title: '短链失效时间', dataIndex: 'shortUrlExpireAt' },
+        { title: '创建人', dataIndex: 'creatorName' },
+        { title: '提交时间', dataIndex: 'createdAt' },
+      ];
+      const formatted = allData.map((row) => ({
+        ...row,
+        shortUrlExpireAt: row.shortUrlExpireAt ? formatDateTime(row.shortUrlExpireAt) : '',
+        createdAt: row.createdAt ? formatDateTime(row.createdAt) : '',
+      }));
+      exportToExcel(formatted, exportColumns, '投放链接管理');
+      message.success(`已导出 ${allData.length} 条数据`);
+    } catch {
+      message.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card bordered={false} className="page-card">
       <Form form={form} layout="inline" className="filter-form filter-form-stacked">
@@ -126,9 +169,14 @@ export function DeliveryLinkListPage() {
             <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
-          <Button type="primary" onClick={() => navigate('/delivery/link-management/create')}>
-            + 新增投放链接
-          </Button>
+          <Space>
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport}>
+              导出 Excel
+            </Button>
+            <Button type="primary" onClick={() => navigate('/delivery/link-management/create')}>
+              + 新增投放链接
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
       <Table

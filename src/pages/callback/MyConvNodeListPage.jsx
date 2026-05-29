@@ -1,8 +1,10 @@
 import { Button, Card, Form, Input, Select, Space, Table, Tag, Tooltip, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { callbackNodeCategories } from '../../constants/convNode';
 import { archiveMyConvNode, getMyConvNodePage, submitMyConvNode } from '../../api/myConvNode';
 import { formatDateTime } from '../../utils/format';
+import { exportToExcel } from '../../utils/exportExcel';
 
 const AUDIT_MAP = {
   0: { label: '待审核', color: 'default' },
@@ -22,6 +24,7 @@ export function MyConvNodeListPage() {
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({ current: 1, size: 10 });
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -156,6 +159,43 @@ export function MyConvNodeListPage() {
     }));
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await getMyConvNodePage({
+        nodeName: filters.nodeName || undefined,
+        convType: filters.convType ? Number(filters.convType) : undefined,
+        eventCategory: filters.eventCategory || undefined,
+        auditResult: filters.auditResult != null ? filters.auditResult : undefined,
+        current: 1,
+        size: 9999,
+      });
+      const allData = res?.data?.records || [];
+      if (!allData.length) { message.warning('暂无数据可导出'); return; }
+      const exportColumns = [
+        { title: '节点名', dataIndex: 'nodeName' },
+        { title: 'convType值', dataIndex: 'convType' },
+        { title: '节点事件分类', dataIndex: 'eventCategory' },
+        { title: '节点事件说明', dataIndex: 'eventDesc' },
+        { title: '审核状态', dataIndex: 'auditResult' },
+        { title: '申请人', dataIndex: 'applicant' },
+        { title: '提交时间', dataIndex: 'submittedAt' },
+      ];
+      const AUDIT_LABEL = { 0: '待审核', 1: '已通过', 2: '已驳回' };
+      const formatted = allData.map((row) => ({
+        ...row,
+        auditResult: AUDIT_LABEL[row.auditResult] ?? '待审核',
+        submittedAt: row.submittedAt ? formatDateTime(row.submittedAt) : '',
+      }));
+      exportToExcel(formatted, exportColumns, '我的回传节点');
+      message.success(`已导出 ${allData.length} 条数据`);
+    } catch {
+      message.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card bordered={false} className="page-card">
       <div className="page-toolbar">
@@ -187,9 +227,14 @@ export function MyConvNodeListPage() {
             <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
-          <Button type="primary" onClick={() => navigate('/callback/my-node/create')}>
-            + 新增参数
-          </Button>
+          <Space>
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport}>
+              导出 Excel
+            </Button>
+            <Button type="primary" onClick={() => navigate('/callback/my-node/create')}>
+              + 新增参数
+            </Button>
+          </Space>
         </div>
       </div>
       <Table

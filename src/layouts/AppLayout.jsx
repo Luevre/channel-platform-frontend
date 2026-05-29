@@ -1,4 +1,4 @@
-import { MenuOutlined } from '@ant-design/icons';
+import { MenuFoldOutlined, MenuOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 import { useEffect, useMemo, useState } from 'react';
 import { Button, Drawer, Grid, Layout, Menu, Tabs, Tooltip } from 'antd';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -25,6 +25,7 @@ export function AppLayout() {
   const isMobile = !screens.lg;
   const [openTabs, setOpenTabs] = useState(() => buildDefaultTabs(location.pathname));
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     const currentMeta = routeMetaMap[location.pathname];
@@ -88,8 +89,23 @@ export function AppLayout() {
   return (
     <Layout className="app-shell">
       {isMobile ? null : (
-        <Sider width={248} className="app-sider" theme="dark">
-          <div className="app-logo">渠道投放中台</div>
+        <Sider
+          width={248}
+          collapsedWidth={64}
+          collapsed={collapsed}
+          trigger={null}
+          className="app-sider"
+          theme="dark"
+        >
+          <div className="app-logo">
+            {!collapsed && <span className="app-logo-text">渠道投放中台</span>}
+            <Button
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed((c) => !c)}
+              className="collapse-toggle-btn"
+            />
+          </div>
           <Menu
             theme="dark"
             mode="inline"
@@ -98,6 +114,7 @@ export function AppLayout() {
             defaultOpenKeys={defaultOpenKeys}
             onClick={onMenuClick}
             className="app-menu"
+            inlineCollapsed={collapsed}
           />
         </Sider>
       )}
@@ -117,7 +134,7 @@ export function AppLayout() {
           onClick={onMenuClick}
         />
       </Drawer>
-      <Layout className="app-main">
+      <Layout className={`app-main${collapsed ? ' sider-collapsed' : ''}`}>
         <Header className="app-header">
           {isMobile ? (
             <div className="mobile-topbar">

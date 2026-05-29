@@ -1,8 +1,10 @@
-import { Button, Card, DatePicker, Form, Input, Select, Space, Table } from 'antd';
+import { Button, Card, DatePicker, Form, Input, Select, Space, Table, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { archiveConvStrategy, getConvStrategyPage } from '../../api/convStrategy';
 import { formatDateTime } from '../../utils/format';
+import { exportToExcel } from '../../utils/exportExcel';
 
 const { RangePicker } = DatePicker;
 
@@ -21,6 +23,7 @@ export function CallbackStrategyListPage() {
   const [total, setTotal] = useState(0);
   const [pagination, setPagination] = useState({ current: 1, size: 10 });
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -139,6 +142,49 @@ export function CallbackStrategyListPage() {
     setPagination({ current: page.current, size: page.pageSize });
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await getConvStrategyPage({
+        strategyName: filters.strategyName || undefined,
+        channel: filters.channel || undefined,
+        strategyRule: filters.strategyRule || undefined,
+        creatorName: filters.creatorName || undefined,
+        startTime: filters.startTime || undefined,
+        endTime: filters.endTime || undefined,
+        current: 1,
+        size: 9999,
+      });
+      const allData = res?.data?.records || [];
+      if (!allData.length) { message.warning('暂无数据可导出'); return; }
+      const exportColumns = [
+        { title: '策略ID', dataIndex: 'id' },
+        { title: '策略名称', dataIndex: 'strategyName' },
+        { title: '应用渠道', dataIndex: 'channel' },
+        { title: '渠道编码', dataIndex: 'bizNo' },
+        { title: '策略模型', dataIndex: 'strategyRule' },
+        { title: '回传比例', dataIndex: 'callbackRatio' },
+        { title: '策略节点概览', dataIndex: 'nodeOverview' },
+        { title: '广告商', dataIndex: 'adInfo' },
+        { title: '策略监测链接', dataIndex: 'strategyParams' },
+        { title: '创建人', dataIndex: 'creatorName' },
+        { title: '提交时间', dataIndex: 'createdAt' },
+      ];
+      const formatted = allData.map((row) => ({
+        ...row,
+        id: String(row.id).padStart(4, '0'),
+        callbackRatio: row.callbackRatio != null ? `${row.callbackRatio}%` : '',
+        createdAt: row.createdAt ? formatDateTime(row.createdAt) : '',
+      }));
+      exportToExcel(formatted, exportColumns, '回传策略管理');
+      message.success(`已导出 ${allData.length} 条数据`);
+    } catch {
+      message.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card bordered={false} className="page-card">
       <Form form={form} layout="inline" className="filter-form filter-form-stacked">
@@ -171,14 +217,17 @@ export function CallbackStrategyListPage() {
         </Form.Item>
         <Form.Item className="filter-actions-inline">
           <Space>
-            <Button type="primary" onClick={handleSearch}>
-              查询
-            </Button>
+            <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
-          <Button type="primary" onClick={() => navigate('/callback/strategy-management/create')}>
-            + 新建策略
-          </Button>
+          <Space>
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport}>
+              导出 Excel
+            </Button>
+            <Button type="primary" onClick={() => navigate('/callback/strategy-management/create')}>
+              + 新建策略
+            </Button>
+          </Space>
         </Form.Item>
       </Form>
       <Table

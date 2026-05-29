@@ -1,9 +1,11 @@
-import { Button, Card, Form, Input, Select, Space, Table } from 'antd';
+import { Button, Card, Form, Input, Select, Space, Table, message } from 'antd';
+import { DownloadOutlined } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { callbackNodeCategories } from '../../constants/convNode';
 import { getConvNodePage } from '../../api/convNode';
 import { formatDateTime } from '../../utils/format';
+import { exportToExcel } from '../../utils/exportExcel';
 
 export function CallbackNodeListPage() {
   const navigate = useNavigate();
@@ -20,6 +22,7 @@ export function CallbackNodeListPage() {
     size: 10,
   });
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -112,6 +115,40 @@ export function CallbackNodeListPage() {
     }));
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await getConvNodePage({
+        nodeName: filters.name || undefined,
+        convType: filters.convType ? Number(filters.convType) : undefined,
+        eventCategory: filters.category || undefined,
+        current: 1,
+        size: 9999,
+      });
+      const allData = res?.data?.records || [];
+      if (!allData.length) { message.warning('暂无数据可导出'); return; }
+      const exportColumns = [
+        { title: '节点名', dataIndex: 'nodeName' },
+        { title: 'convType值', dataIndex: 'convType' },
+        { title: '节点事件分类', dataIndex: 'eventCategory' },
+        { title: '节点事件说明', dataIndex: 'eventDesc' },
+        { title: '节点事件判断', dataIndex: 'eventJudge' },
+        { title: '创建人', dataIndex: 'creatorName' },
+        { title: '最近操作时间', dataIndex: 'updatedAt' },
+      ];
+      const formatted = allData.map((row) => ({
+        ...row,
+        updatedAt: row.updatedAt ? formatDateTime(row.updatedAt) : '',
+      }));
+      exportToExcel(formatted, exportColumns, '回传节点管理');
+      message.success(`已导出 ${allData.length} 条数据`);
+    } catch {
+      message.error('导出失败，请重试');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <Card bordered={false} className="page-card">
       <div className="page-toolbar">
@@ -133,14 +170,17 @@ export function CallbackNodeListPage() {
         </Form>
         <div className="toolbar-actions">
           <Space>
-            <Button type="primary" onClick={handleSearch}>
-              查询
-            </Button>
+            <Button type="primary" onClick={handleSearch}>查询</Button>
             <Button onClick={handleReset}>重置</Button>
           </Space>
-          <Button type="primary" onClick={() => navigate('/callback/node-management/create')}>
-            + 新增节点
-          </Button>
+          <Space>
+            <Button icon={<DownloadOutlined />} loading={exporting} onClick={handleExport}>
+              导出 Excel
+            </Button>
+            <Button type="primary" onClick={() => navigate('/callback/node-management/create')}>
+              + 新增节点
+            </Button>
+          </Space>
         </div>
       </div>
       <Table
